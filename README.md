@@ -1,204 +1,153 @@
-\# Snake Game
+# Snake Game
 
+A classic Snake Game implemented in C++ as a console-based game.
 
+This project was built to practice C++ programming fundamentals, object-oriented programming, game loop design, keyboard input, collision detection, and basic data structures.
 
-A simple Snake Game written in C++ as a personal programming project.
+## Features
 
+* Console-based Snake Game
+* WASD keyboard controls
+* Food spawning at random positions
+* Snake growth when food is collected
+* Score system
+* Wall collision detection
+* Self-collision detection
+* Game Over state
+* Adjustable game speed
 
+## Controls
 
-This project is part of my journey to strengthen my C++ programming fundamentals and build practical game development projects.
+| Key | Action        |
+| --- | ------------- |
+| `W` | Move Up       |
+| `A` | Move Left     |
+| `S` | Move Down     |
+| `D` | Move Right    |
+| `X` | Exit the game |
 
+The game prevents the snake from immediately moving in the opposite direction.
 
+## How It Works
 
-\## About the Project
+The game is organized around a `SnakeGame` class that manages the main game state, including:
 
+* Snake head position
+* Snake body
+* Fruit position
+* Current direction
+* Score
+* Game Over state
 
+The snake body is stored using:
 
-Snake Game is a classic arcade-style game where the player controls a snake, collects food, and tries to achieve the highest possible score without colliding with obstacles or the snake's own body.
+```cpp
+vector<Point> tail;
+```
 
-
-
-The project is written in C++ and focuses on practicing:
-
-
-
-\* C++ programming fundamentals
-
-\* Game loop logic
-
-\* Keyboard input
-
-\* Collision detection
-
-\* Score management
-
-\* Arrays and data structures
-
-\* Program structure and problem solving
-
-
-
-\## Project Structure
-
-
+Each game iteration follows the basic loop:
 
 ```text
+Draw
+  ↓
+Input
+  ↓
+Logic
+  ↓
+Collision Check
+  ↓
+Repeat
+```
 
+The game uses keyboard input to update the snake's direction, moves the snake, checks whether food has been collected, updates the body, and then checks for collisions.
+
+## Project Structure
+
+```text
 SnakeGame/
-
+│
 ├── docs/
-
 │   └── screenshots/
-
 │
-
 ├── src/
-
-│   └── snake\_game.cpp
-
+│   └── snake_game.cpp
 │
-
 ├── .gitignore
-
 └── README.md
-
 ```
 
+## Requirements
 
+* Windows
+* C++ compiler
+* Console/terminal
 
-\## Getting Started
+This project currently uses Windows-specific libraries such as:
 
+```cpp
+#include <conio.h>
+#include <windows.h>
+```
 
+Therefore, the current implementation is intended for Windows.
 
-\### Requirements
+## Build and Run
 
-
-
-\* C++ compiler
-
-\* Windows or another platform with a compatible C++ environment
-
-\* Git (optional, for cloning and version control)
-
-
-
-\### Compile
-
-
-
-If you are using a C++ compiler such as `g++`, you can compile the source file with:
-
-
+Using `g++`:
 
 ```bash
-
-g++ src/snake\_game.cpp -o SnakeGame
-
+g++ src/snake_game.cpp -o SnakeGame.exe
 ```
 
-
-
-Then run:
-
-
-
-```bash
-
-./SnakeGame
-
-```
-
-
-
-On Windows PowerShell, the executable can be run with:
-
-
+Run:
 
 ```powershell
-
-.\\SnakeGame.exe
-
+.\SnakeGame.exe
 ```
 
+If you are using Visual Studio, Dev-C++, or another C++ IDE, you can also compile and run the project directly through the IDE.
 
+## Screenshots
 
-> The exact compile command may vary depending on the compiler and development environment you use.
-
-
-
-\## Screenshots
-
-
-
-Screenshots will be added to:
-
-
+Screenshots of the game will be stored in:
 
 ```text
-
 docs/screenshots/
-
 ```
 
+## What I Practiced
 
+This project helped me practice:
 
-\## What I Learned
+* C++ classes and encapsulation
+* `struct`
+* `enum`
+* `vector`
+* Functions and member functions
+* Loops and conditional statements
+* Keyboard input
+* Random number generation
+* Collision detection
+* Game loop structure
+* Git and GitHub workflow
 
+## Future Improvements
 
+Planned improvements include:
 
-Through this project, I am practicing how to:
+* Improve the console interface
+* Add difficulty levels
+* Add a high-score system
+* Improve code organization
+* Add pause/restart functionality
+* Refactor the game into multiple source/header files
+* Experiment with pathfinding and game AI
+* Explore autonomous Snake behavior
 
+## Author
 
+**Phan Quoc Huy**
 
-\* Organize a C++ project
+Information Technology Student interested in **Game AI Programming**.
 
-\* Manage source code with Git and GitHub
-
-\* Implement game logic
-
-\* Debug programming problems
-
-\* Turn programming concepts into a practical project
-
-
-
-\## Future Improvements
-
-
-
-Possible improvements for future versions:
-
-
-
-\* Improve the game interface
-
-\* Add difficulty levels
-
-\* Add a high-score system
-
-\* Improve code organization
-
-\* Add sound effects
-
-\* Add more game modes
-
-\* Experiment with game AI
-
-
-
-\## Author
-
-
-
-\*\*Phan Quoc Huy\*\*
-
-
-
-Information Technology Student interested in \*\*Game AI Programming\*\*.
-
-
-
-GitHub: \[huypq020607-code](https://github.com/huypq020607-code)
-
-
-
+GitHub: `huypq020607-code`
