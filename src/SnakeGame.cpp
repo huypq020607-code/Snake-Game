@@ -20,8 +20,8 @@ void hideCursor(){
     SetConsoleCursorInfo(hOut, &cursorInfo);
 }
 SnakeGame :: SnakeGame(){
-	gameOver=false;
-	dir=STOP;
+	state = PLAYING;
+	dir = STOP;
 	head.x = width / 2;
 	head.y = height / 2;
 	score=0;
@@ -74,16 +74,62 @@ void SnakeGame :: Draw(){
 	for(int i=0;i<width+2;i++) cout << "#";
 	cout << endl;
 	cout << "Score : " << score << endl;
-	cout << "WASD: Move | X: Exit" << endl;
+	if(state == PAUSED){
+		cout << "PAUSED - Press P to continue" << endl;
+	}
+	else if(state == GAME_OVER){
+		cout << "GAME_OVER - Press R to restart game" << endl;
+		cout << "Press X to exit game" << endl;
+	}
+	else if (state == PLAYING){
+		cout << "WASD: Move | P: Pause | X: Exit" << endl;
+	}
 }
 void SnakeGame :: Input(){
 	if(_kbhit()){ //kiem tra neu co phim bam vao
 		switch(_getch()){
-			case 'a': if(dir!=RIGHT) dir=LEFT; break;
-			case 'd': if(dir!=LEFT) dir=RIGHT; break;
-			case 'w': if(dir!=DOWN) dir=UP; break;
-			case 's': if(dir!=UP) dir=DOWN; break;
-			case 'x': gameOver=true; break;
+			case 'r':
+			case 'R':
+				  if(state == GAME_OVER){
+					ResetGame();
+				  }
+				  break;
+			case 'p':
+			case 'P':
+				  if(state == PLAYING){
+					state = PAUSED;
+				  }
+				  else if(state == PAUSED){
+					state = PLAYING;
+				  }
+				  break;
+			case 'a':
+			case 'A':
+				  if(state == PLAYING && dir!=RIGHT) 
+					dir=LEFT;
+				  break;
+			case 'd':
+			case 'D':
+				  if(state == PLAYING && dir!=LEFT){ 
+					dir=RIGHT;
+				  }
+				  break;
+			case 'w':
+			case 'W':
+				  if(state == PLAYING && dir!=DOWN){ 
+					dir=UP;
+				  }
+				  break;
+			case 's':
+			case 'S':
+				  if(state == PLAYING && dir!=UP){
+					dir=DOWN;
+				  }
+				  break;
+			case 'x':
+			case 'X':
+				  state = EXITED;
+				  break;
 		}
 	}
 }
@@ -132,21 +178,36 @@ void SnakeGame :: Move() {
 void SnakeGame :: CheckCollision() {
 	//va tuong
 	if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height) {
-		gameOver = true;
+		state = GAME_OVER;
 		return;
 	}
 	//va than
-	for (auto& t : tail) {
+	for (const auto& t : tail) {
 		if (head.x == t.x && head.y == t.y) {
-			gameOver = true;
+			state = GAME_OVER;
 			return;
 		}
 	}
+}
+void SnakeGame :: ResetGame(){
+	tail.clear();
+	state = PLAYING;
+	dir = STOP;
+	head.x = width/2;
+	head.y = height/2;
+	score = 0;
+	SpawnFruit();
 }
 void SnakeGame :: Logic() {
 	Move();
 	CheckCollision();
 }
 bool SnakeGame :: IsGameOver() const {
-	return gameOver;
+	return state == GAME_OVER;
+}
+bool SnakeGame :: IsPlaying() const{
+	return state == PLAYING;
+}
+bool SnakeGame :: IsExited() const{
+	return state == EXITED;
 }

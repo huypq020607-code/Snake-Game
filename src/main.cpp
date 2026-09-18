@@ -11,17 +11,18 @@ int main(){
 	hideCursor();
 	const int gameSpeed = 60;
 	SnakeGame game;
-	while(!game.IsGameOver()){
-		game.Draw();
+	while(!game.IsExited()){
 		game.Input();
-		game.Logic();
+		if(game.IsPlaying()){
+			game.Logic();
+		}
+		game.Draw();
 		Sleep(gameSpeed); //dieu chinh toc do game (ms)
 	}
 	gotoXY(0, 23);
-	cout << "============================" << endl;
-   	cout << "        GAME OVER!          " << endl;
-    	cout << "============================" << endl;
-    	cout << "Nhan phim bat ky de thoat..." << endl;
+	cout << "===============================================" << endl;
+   	cout << "----    Thank you for your playing !!!!    ----" << endl;
+    	cout << "===============================================" << endl;
     	system("pause"); // Dung man hinh de ban xem diem so truoc khi dong
 	return 0;
 }
