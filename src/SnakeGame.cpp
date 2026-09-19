@@ -5,35 +5,123 @@
 #include <cstdlib>
 using namespace std;
 //di chuyen con tro
-void gotoXY(int x, int y){
-    COORD coord;
-    coord.X = x;
-    coord.Y = y;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+void gotoXY(int x, int y) {
+	COORD coord;
+	coord.X = x;
+	coord.Y = y;
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 //an con tro
-void hideCursor(){
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_CURSOR_INFO cursorInfo;
-    GetConsoleCursorInfo(hOut, &cursorInfo);
-    cursorInfo.bVisible = false;
-    SetConsoleCursorInfo(hOut, &cursorInfo);
+void hideCursor() {
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO cursorInfo;
+	GetConsoleCursorInfo(hOut, &cursorInfo);
+	cursorInfo.bVisible = false;
+	SetConsoleCursorInfo(hOut, &cursorInfo);
 }
-SnakeGame :: SnakeGame(){
-	state = PLAYING;
+SnakeGame::SnakeGame() {
+	state = MENU;
+	selectedOption = START_GAME;
+	difficulty = NORMAL;
+	gameSpeed = 60;
 	dir = STOP;
 	head.x = width / 2;
 	head.y = height / 2;
-	score=0;
+	score = 0;
 	SpawnFruit();
+	DrawMenu();
 }
-void SnakeGame :: SpawnFruit() {
+void SnakeGame::DrawMenu() {
+	gotoXY(0, 0);
+	cout << "==========================" << endl;
+	cout << "          SNAKE GAME                " << endl;
+	cout << "==========================" << endl;
+	cout << endl;
+	cout << "          MAIN MENU                 " << endl;
+	cout << endl;
+	// START GAME
+	if (selectedOption == START_GAME) {
+		cout << "   > START GAME" << endl;
+	}
+	else {
+		cout << "     START GAME" << endl;
+	}
+	// DIFFICULTY
+	if (selectedOption == DIFFICULTY) {
+		cout << "   > DIFFICULTY" << endl;
+	}
+	else {
+		cout << "     DIFFICULTY" << endl;
+	}
+	// INSTRUCTIONS
+	if (selectedOption == INSTRUCTIONS) {
+		cout << "   > INSTRUCTIONS" << endl;
+	}
+	else {
+		cout << "     INSTRUCTIONS" << endl;
+	}
+	// EXIT
+	if (selectedOption == EXIT_MENU) {
+		cout << "   > EXIT" << endl;
+	}
+	else {
+		cout << "     EXIT" << endl;
+	}
+	cout << endl;
+	cout << "==========================" << endl;
+	cout << "       W / S: Move" << endl;
+	cout << "       ENTER: Select" << endl;
+	cout << "==========================" << endl;
+}
+void SnakeGame::MenuInput() {
+	if (!_kbhit()) {
+		return;
+	}
+	int key = _getch();
+	//di chuyen len
+	if (key == 'w' || key == 'W') {
+		selectedOption--;
+		if (selectedOption < START_GAME) {
+			selectedOption = EXIT_MENU;
+		}
+		DrawMenu();
+	}
+	//di chuyen xuong
+	else if (key == 's' || key == 'S') {
+		selectedOption++;
+		if (selectedOption > EXIT_MENU) {
+			selectedOption = START_GAME;
+		}
+		DrawMenu();
+	}
+	//chon
+	//trong window console 13=enter
+	else if (key == 13) { //enter
+		switch (selectedOption) {
+		case START_GAME:
+			ResetGame();
+			state = PLAYING;
+			Draw();
+			break;
+		case DIFFICULTY:
+			//tam thoi chua co
+			break;
+		case INSTRUCTIONS:
+			//tam chua co
+			break;
+		case EXIT_MENU:
+			state = EXITED;
+			break;
+		}
+	}
+}
+void SnakeGame::SpawnFruit() {
 	do {
 		fruit.x = rand() % width;
 		fruit.y = rand() % height;
 	} while (IsOnSnake(fruit));
 }
-bool SnakeGame :: IsOnSnake(Point p) const{
+bool SnakeGame::IsOnSnake(Point p) const {
 	if (p.x == head.x && p.y == head.y) {
 		return true;
 	}
@@ -44,96 +132,109 @@ bool SnakeGame :: IsOnSnake(Point p) const{
 	}
 	return false;
 }
-void SnakeGame :: Draw(){
-	gotoXY(0,0);
+void SnakeGame::Draw() {
+	if (state == MENU) {
+		DrawMenu();
+		return;
+	}
+	gotoXY(0, 0);
 	//tuong tren
 	for (int i = 0;i < width + 2;i++) {
 		cout << "#";
 	}
 	cout << endl;
-	for(int i=0;i<height;i++){
-		for(int j=0;j<width;j++){
-			if(j==0) cout << "#"; //tuong trai
-			if(i==head.y && j==head.x) cout << "O"; //dau ran
-			else if(i==fruit.y && j==fruit.x) cout << "*"; //thuc an
-			else{
-				bool printTail=false;
-				for(const auto& t:tail){
-					if(t.x==j && t.y==i){
+	for (int i = 0;i < height;i++) {
+		for (int j = 0;j < width;j++) {
+			if (j == 0) cout << "#"; //tuong trai
+			if (i == head.y && j == head.x) cout << "O"; //dau ran
+			else if (i == fruit.y && j == fruit.x) cout << "*"; //thuc an
+			else {
+				bool printTail = false;
+				for (const auto& t : tail) {
+					if (t.x == j && t.y == i) {
 						cout << "o";
-						printTail=true;
+						printTail = true;
 						break;
 					}
 				}
-				if(!printTail) cout << " ";
+				if (!printTail) cout << " ";
 			}
-			if(j==width-1) cout << "#"; //tuong phai
+			if (j == width - 1) cout << "#"; //tuong phai
 		}
 		cout << endl;
 	}
-	for(int i=0;i<width+2;i++) cout << "#";
+	for (int i = 0;i < width + 2;i++) cout << "#";
 	cout << endl;
-	cout << "Score : " << score << endl;
-	if(state == PAUSED){
-		cout << "PAUSED - Press P to continue" << endl;
+	// Hien thi Score
+	cout << "Score : " << score << "                    " << endl;
+	// Hien thi trang thai
+	if (state == PLAYING) {
+		cout << "WASD: Move | P: Pause | X: Exit        " << endl;
 	}
-	else if(state == GAME_OVER){
-		cout << "GAME_OVER - Press R to restart game" << endl;
-		cout << "Press X to exit game" << endl;
+	else if (state == PAUSED) {
+		cout << "              PAUSED                  " << endl;
+		cout << "        Press P to continue            " << endl;
+		cout << "        Press X to exit                " << endl;
+
 	}
-	else if (state == PLAYING){
-		cout << "WASD: Move | P: Pause | X: Exit" << endl;
+	else if (state == GAME_OVER) {
+		cout << "             GAME OVER                 " << endl;
+		cout << "        Press R to restart             " << endl;
+		cout << "        Press X to exit                " << endl;
 	}
 }
-void SnakeGame :: Input(){
-	if(_kbhit()){ //kiem tra neu co phim bam vao
-		switch(_getch()){
-			case 'r':
-			case 'R':
-				  if(state == GAME_OVER){
-					ResetGame();
-				  }
-				  break;
-			case 'p':
-			case 'P':
-				  if(state == PLAYING){
-					state = PAUSED;
-				  }
-				  else if(state == PAUSED){
-					state = PLAYING;
-				  }
-				  break;
-			case 'a':
-			case 'A':
-				  if(state == PLAYING && dir!=RIGHT) 
-					dir=LEFT;
-				  break;
-			case 'd':
-			case 'D':
-				  if(state == PLAYING && dir!=LEFT){ 
-					dir=RIGHT;
-				  }
-				  break;
-			case 'w':
-			case 'W':
-				  if(state == PLAYING && dir!=DOWN){ 
-					dir=UP;
-				  }
-				  break;
-			case 's':
-			case 'S':
-				  if(state == PLAYING && dir!=UP){
-					dir=DOWN;
-				  }
-				  break;
-			case 'x':
-			case 'X':
-				  state = EXITED;
-				  break;
+void SnakeGame::Input() {
+	if (_kbhit()) { //kiem tra neu co phim bam vao
+		switch (_getch()) {
+		case 'r':
+		case 'R':
+			if (state == GAME_OVER) {
+				ResetGame();
+				Draw();
+			}
+			break;
+		case 'p':
+		case 'P':
+			if (state == PLAYING) {
+				state = PAUSED;
+				Draw();
+			}
+			else if (state == PAUSED) {
+				state = PLAYING;
+				Draw();
+			}
+			break;
+		case 'a':
+		case 'A':
+			if (state == PLAYING && dir != RIGHT)
+				dir = LEFT;
+			break;
+		case 'd':
+		case 'D':
+			if (state == PLAYING && dir != LEFT) {
+				dir = RIGHT;
+			}
+			break;
+		case 'w':
+		case 'W':
+			if (state == PLAYING && dir != DOWN) {
+				dir = UP;
+			}
+			break;
+		case 's':
+		case 'S':
+			if (state == PLAYING && dir != UP) {
+				dir = DOWN;
+			}
+			break;
+		case 'x':
+		case 'X':
+			state = EXITED;
+			break;
 		}
 	}
 }
-void SnakeGame :: Move() {
+void SnakeGame::Move() {
 	if (dir == STOP) {
 		return;
 	}
@@ -141,20 +242,20 @@ void SnakeGame :: Move() {
 	Point previousHead = head;
 	//di chuyen
 	switch (dir) {
-		case LEFT:
-			head.x--;
-			break;
-		case RIGHT:
-			head.x++;
-				break;
-		case UP:
-			head.y--;
-			break;
-		case DOWN:
-			head.y++;
-			break;
-		default:
-			break;
+	case LEFT:
+		head.x--;
+		break;
+	case RIGHT:
+		head.x++;
+		break;
+	case UP:
+		head.y--;
+		break;
+	case DOWN:
+		head.y++;
+		break;
+	default:
+		break;
 	}
 	//neu an thuc an
 	if (head.x == fruit.x && head.y == fruit.y) {
@@ -175,7 +276,7 @@ void SnakeGame :: Move() {
 	}
 }
 // va cham
-void SnakeGame :: CheckCollision() {
+void SnakeGame::CheckCollision() {
 	//va tuong
 	if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height) {
 		state = GAME_OVER;
@@ -189,25 +290,34 @@ void SnakeGame :: CheckCollision() {
 		}
 	}
 }
-void SnakeGame :: ResetGame(){
+void SnakeGame::ResetGame() {
 	tail.clear();
 	state = PLAYING;
 	dir = STOP;
-	head.x = width/2;
-	head.y = height/2;
+	head.x = width / 2;
+	head.y = height / 2;
 	score = 0;
 	SpawnFruit();
 }
-void SnakeGame :: Logic() {
+void SnakeGame::Logic() {
 	Move();
 	CheckCollision();
 }
-bool SnakeGame :: IsGameOver() const {
+bool SnakeGame::IsGameOver() const {
 	return state == GAME_OVER;
 }
-bool SnakeGame :: IsPlaying() const{
+bool SnakeGame::IsPlaying() const {
 	return state == PLAYING;
 }
-bool SnakeGame :: IsExited() const{
+bool SnakeGame::IsExited() const {
 	return state == EXITED;
+}
+bool SnakeGame::IsInMenu() const {
+	return state == MENU;
+}
+void SnakeGame::RunMenu() {
+	MenuInput();
+}
+bool SnakeGame::IsPaused() const {
+	return state == PAUSED;
 }
