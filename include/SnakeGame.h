@@ -14,6 +14,7 @@ enum Direction {
 };
 enum GameState {
 	MENU,
+	DIFFICULTY_MENU,
 	PLAYING,
 	PAUSED,
 	GAME_OVER,
@@ -24,6 +25,11 @@ enum MenuOption {
 	DIFFICULTY,
 	INSTRUCTIONS,
 	EXIT_MENU
+};
+enum GameOverOption {
+	RESTART_GAME = 0,
+	MAIN_MENU,
+	EXIT_GAME
 };
 enum Difficulty {
 	EASY = 0,
@@ -41,6 +47,7 @@ private:
 	std::vector<Point> tail;
 	Direction dir;
 	int selectedOption;
+	int selectedGameOverOption;
 	Difficulty difficulty;
 	int gameSpeed;
 	void SpawnFruit();
@@ -50,7 +57,9 @@ private:
 	void DrawMenu();
 	void MenuInput();
 	void DrawDifficultyMenu();
+	void DifficultyInput();
 	void DrawGameOverMenu();
+	void GameOverInput();
 public:
 	SnakeGame();
 	void Draw();
@@ -58,12 +67,16 @@ public:
 	void Logic();
 	void ResetGame();
 	void RunMenu();
+	void RunGameOverMenu();
 	bool IsGameOver() const;
 	bool IsPlaying() const;
 	bool IsPaused() const;
 	bool IsExited() const;
 	bool IsInMenu() const;
+	bool IsInDifficultyMenu() const;
+	int GetGameSpeed() const;
 };
 void gotoXY(int x, int y);
 void hideCursor();
+void ClearScreen();
 #endif

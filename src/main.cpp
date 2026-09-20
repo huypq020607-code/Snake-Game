@@ -1,3 +1,9 @@
+#include "../include/SnakeGame.h"
+#include <iostream>
+#include <ctime>
+#include <cstdlib>
+#include <windows.h>
+using namespace std;
 int main() {
 	//tao seed random
 	srand(static_cast<unsigned int>(time(0)));
@@ -17,9 +23,9 @@ int main() {
 			game.Input();
 		}
 		else if (game.IsGameOver()) {
-			game.Input();
+			game.RunGameOverMenu ();
 		}
-		Sleep(60); //dieu chinh toc do game (ms)
+		Sleep(game.GetGameSpeed()); //dieu chinh toc do game (ms)
 	}
 	gotoXY(0, 23);
 	cout << "===============================================" << endl;
