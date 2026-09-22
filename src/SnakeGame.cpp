@@ -277,6 +277,7 @@ void SnakeGame::MenuInput() {
 		switch (selectedOption) {
 		case START_GAME:
 			ResetGame();
+			selectedGameOverOption = RESTART_GAME;
 			state = PLAYING;
 			Draw();
 			break;
@@ -497,6 +498,7 @@ void SnakeGame::CheckCollision() {
 	//va tuong
 	if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height) {
 		state = GAME_OVER;
+		ClearScreen();
 		DrawGameOverMenu();
 		return;
 	}
@@ -504,6 +506,7 @@ void SnakeGame::CheckCollision() {
 	for (const auto& t : tail) {
 		if (head.x == t.x && head.y == t.y) {
 			state = GAME_OVER;
+			ClearScreen();
 			DrawGameOverMenu();
 			return;
 		}
@@ -516,6 +519,7 @@ void SnakeGame::ResetGame() {
 	head.x = width / 2;
 	head.y = height / 2;
 	score = 0;
+	selectedGameOverOption = RESTART_GAME;
 	SpawnFruit();
 }
 void SnakeGame::Logic() {
