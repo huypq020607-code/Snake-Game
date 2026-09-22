@@ -165,6 +165,30 @@ void SnakeGame::DrawDifficultyMenu() {
 	cout << "       X: Back" << endl;
 	cout << "==========================" << endl;
 }
+void SnakeGame::DrawInstructionsMenu() {
+	gotoXY(0, 0);
+	cout << "==============================" << endl;
+	cout << "         INSTRUCTIONS         " << endl;
+	cout << "==============================" << endl;
+	cout << endl;
+	cout << "          HOW TO PLAY         " << endl;
+	cout << endl;
+	cout << "    W / UP    : Move Up       " << endl;
+	cout << "    S / DOWN  : Move Down     " << endl;
+	cout << "    A / LEFT  : Move Left     " << endl;
+	cout << "    D / RIGHT : Move Right    " << endl;
+	cout << endl;
+	cout << "    P         : Pause         " << endl;
+	cout << "    X         : Exit          " << endl;
+	cout << endl;
+	cout << "    Eat *     : +10 Score     " << endl;
+	cout << "    Hit Wall  : Game Over     " << endl;
+	cout << "    Hit Body  : Game Over     " << endl;
+	cout << endl;
+	cout << "==============================" << endl;
+	cout << "          X: Back             " << endl;
+	cout << "==============================" << endl;
+}
 void SnakeGame::Draw() {
 	if (state == MENU) {
 		DrawMenu();
@@ -172,6 +196,14 @@ void SnakeGame::Draw() {
 	}
 	if (state == GAME_OVER) {
 		DrawGameOverMenu();
+		return;
+	}
+	if (state == DIFFICULTY_MENU) {
+		DrawDifficultyMenu();
+		return;
+	}
+	if (state == INSTRUCTIONS_MENU) {
+		DrawInstructionsMenu();
 		return;
 	}
 	gotoXY(0, 0);
@@ -254,7 +286,9 @@ void SnakeGame::MenuInput() {
 			DrawDifficultyMenu();
 			break;
 		case INSTRUCTIONS:
-			//tam chua co
+			state = INSTRUCTIONS_MENU;
+			ClearScreen();
+			DrawInstructionsMenu();
 			break;
 		case EXIT_MENU:
 			state = EXITED;
@@ -312,7 +346,7 @@ void SnakeGame::GameOverInput() {
 		return;
 	}
 	int key = _getch();
-	if (key == 'w' || key == 'w') {
+	if (key == 'w' || key == 'W') {
 		selectedGameOverOption--;
 		if (selectedGameOverOption < RESTART_GAME) {
 			selectedGameOverOption = EXIT_GAME;
@@ -342,6 +376,18 @@ void SnakeGame::GameOverInput() {
 			state = EXITED;
 			break;
 		}
+	}
+}
+void SnakeGame::InstructionsInput() {
+	if (!_kbhit()) {
+		return;
+	}
+	int key = _getch();
+	if (key == 'x' || key == 'X') {
+		state = MENU;
+		selectedOption = INSTRUCTIONS;
+		ClearScreen();
+		DrawMenu();
 	}
 }
 void SnakeGame::Input() {
@@ -451,12 +497,14 @@ void SnakeGame::CheckCollision() {
 	//va tuong
 	if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height) {
 		state = GAME_OVER;
+		DrawGameOverMenu();
 		return;
 	}
 	//va than
 	for (const auto& t : tail) {
 		if (head.x == t.x && head.y == t.y) {
 			state = GAME_OVER;
+			DrawGameOverMenu();
 			return;
 		}
 	}
@@ -471,8 +519,10 @@ void SnakeGame::ResetGame() {
 	SpawnFruit();
 }
 void SnakeGame::Logic() {
-	Move();
-	CheckCollision();
+	if (state == PLAYING) {
+		Move();
+		CheckCollision();
+	}
 }
 bool SnakeGame::IsGameOver() const {
 	return state == GAME_OVER;
@@ -484,7 +534,7 @@ bool SnakeGame::IsExited() const {
 	return state == EXITED;
 }
 bool SnakeGame::IsInMenu() const {
-	return state == MENU || state == DIFFICULTY_MENU;
+	return state == MENU || state == DIFFICULTY_MENU || state == INSTRUCTIONS_MENU;
 }
 void SnakeGame::RunMenu() {
 	if (state == MENU) {
@@ -492,6 +542,9 @@ void SnakeGame::RunMenu() {
 	}
 	else if (state == DIFFICULTY_MENU) {
 		DifficultyInput();
+	}
+	else if (state == INSTRUCTIONS_MENU) {
+		InstructionsInput();
 	}
 }
 bool SnakeGame::IsPaused() const {

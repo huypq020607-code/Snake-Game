@@ -15,6 +15,7 @@ enum Direction {
 enum GameState {
 	MENU,
 	DIFFICULTY_MENU,
+	INSTRUCTIONS_MENU,
 	PLAYING,
 	PAUSED,
 	GAME_OVER,
@@ -58,6 +59,8 @@ private:
 	void MenuInput();
 	void DrawDifficultyMenu();
 	void DifficultyInput();
+	void DrawInstructionsMenu();
+	void InstructionsInput();
 	void DrawGameOverMenu();
 	void GameOverInput();
 public:
