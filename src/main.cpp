@@ -18,14 +18,20 @@ int main() {
 			game.Input();
 			game.Logic();
 			game.Draw();
+			Sleep(game.GetGameSpeed()); //dieu chinh toc do game (ms)
 		}
 		else if (game.IsPaused()) {
 			game.Input();
+			Sleep(50);
+		}
+		else if (game.IsGameOverScreen()) {
+			game.RunGameOverScreen();
+			Sleep(50);
 		}
 		else if (game.IsGameOver()) {
 			game.RunGameOverMenu ();
+			Sleep(50);
 		}
-		Sleep(game.GetGameSpeed()); //dieu chinh toc do game (ms)
 	}
 	gotoXY(0, 23);
 	cout << "===============================================" << endl;

@@ -18,6 +18,7 @@ enum GameState {
 	INSTRUCTIONS_MENU,
 	PLAYING,
 	PAUSED,
+	GAME_OVER_SCREEN,
 	GAME_OVER,
 	EXITED
 };
@@ -45,12 +46,16 @@ private:
 	int score;
 	Point head;
 	Point fruit;
+	Point previousHead;
+	Point previousTail;
 	std::vector<Point> tail;
 	Direction dir;
 	int selectedOption;
 	int selectedGameOverOption;
 	Difficulty difficulty;
 	int gameSpeed;
+	bool ateFruit;
+	bool needFullDraw;
 	void SpawnFruit();
 	bool IsOnSnake(Point p) const;
 	void Move();
@@ -61,6 +66,8 @@ private:
 	void DifficultyInput();
 	void DrawInstructionsMenu();
 	void InstructionsInput();
+	void DrawGameOverScreen();
+	void GameOverScreenInput();
 	void DrawGameOverMenu();
 	void GameOverInput();
 public:
@@ -70,6 +77,8 @@ public:
 	void Logic();
 	void ResetGame();
 	void RunMenu();
+	bool IsGameOverScreen() const;
+	void RunGameOverScreen();
 	void RunGameOverMenu();
 	bool IsGameOver() const;
 	bool IsPlaying() const;

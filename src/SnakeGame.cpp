@@ -53,6 +53,10 @@ SnakeGame::SnakeGame() {
 	head.x = width / 2;
 	head.y = height / 2;
 	score = 0;
+	ateFruit = false;
+	needFullDraw = true;
+	previousHead = head;
+	previousTail = { -1,-1 };
 	SpawnFruit();
 	DrawMenu();
 }
@@ -97,6 +101,19 @@ void SnakeGame::DrawMenu() {
 	cout << "       W / S: Move" << endl;
 	cout << "       ENTER: Select" << endl;
 	cout << "==========================" << endl;
+}
+void SnakeGame::DrawGameOverScreen() {
+	ClearScreen();
+	gotoXY(0, 0);
+	cout << "==============================" << endl;
+	cout << "          GAME OVER           " << endl;
+	cout << "==============================" << endl;
+	cout << endl;
+	cout << "          YOUR SCORE: " << score << endl;
+	cout << endl;
+	cout << "==============================" << endl;
+	cout << "    Press ENTER to continue   " << endl;
+	cout << "==============================" << endl;
 }
 void SnakeGame::DrawGameOverMenu() {
 	gotoXY(0, 0);
@@ -206,48 +223,96 @@ void SnakeGame::Draw() {
 		DrawInstructionsMenu();
 		return;
 	}
-	gotoXY(0, 0);
-	//tuong tren
-	for (int i = 0;i < width + 2;i++) {
-		cout << "#";
+	if (state == GAME_OVER_SCREEN) {
+		DrawGameOverScreen();
+		return;
 	}
-	cout << endl;
-	for (int i = 0;i < height;i++) {
-		for (int j = 0;j < width;j++) {
-			if (j == 0) cout << "#"; //tuong trai
-			if (i == head.y && j == head.x) cout << "O"; //dau ran
-			else if (i == fruit.y && j == fruit.x) cout << "*"; //thuc an
-			else {
-				bool printTail = false;
-				for (const auto& t : tail) {
-					if (t.x == j && t.y == i) {
-						cout << "o";
-						printTail = true;
-						break;
-					}
-				}
-				if (!printTail) cout << " ";
-			}
-			if (j == width - 1) cout << "#"; //tuong phai
+	// VE TOAN BO LAN DAU
+	if (needFullDraw) {
+		ClearScreen();
+		// Tuong tren
+		gotoXY(0, 0);
+		for (int i = 0; i < width + 2; i++) {
+			cout << "#";
 		}
 		cout << endl;
+		// Board
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
+				if (j == 0) {
+					cout << "#";
+				}
+				if (i == head.y && j == head.x) {
+					cout << "O";
+				}
+				else if (i == fruit.y && j == fruit.x) {
+					cout << "*";
+				}
+				else {
+					bool printTail = false;
+					for (const auto& t : tail) {
+						if (t.x == j && t.y == i) {
+							cout << "o";
+							printTail = true;
+							break;
+						}
+					}
+					if (!printTail) {
+						cout << " ";
+					}
+				}
+				if (j == width - 1) {
+					cout << "#";
+				}
+			}
+			cout << endl;
+		}
+		// Tuong duoi
+		for (int i = 0; i < width + 2; i++) {
+			cout << "#";
+		}
+		cout << endl;
+		// Score
+		cout << "Score : " << score
+			<< "                    " << endl;
+		// Trang thai
+		if (state == PLAYING) {
+			cout << "WASD: Move | P: Pause | X: Exit        " << endl;
+		}
+		needFullDraw = false;
+		return;
 	}
-	for (int i = 0;i < width + 2;i++) cout << "#";
-	cout << endl;
-	// Hien thi Score
-	cout << "Score : " << score << "                    " << endl;
-	// Hien thi trang thai
-	if (state == PLAYING) {
-		cout << "WASD: Move | P: Pause | X: Exit        " << endl;
-	}
-	else if (state == PAUSED) {
-		cout << "              PAUSED                  " << endl;
-		cout << "        Press P to continue            " << endl;
-		cout << "        Press X to exit                " << endl;
+	// CHI CAP NHAT PHAN THAY DOI
+	//Xoa dau cu
+	gotoXY(previousHead.x + 1, previousHead.y + 1);
+	cout << " ";
+	//Neu khong an fruit thi xoa duoi cu
+	if (!ateFruit && previousTail.x != -1) {
 
+		gotoXY(previousTail.x + 1, previousTail.y + 1);
+		cout << " ";
 	}
-	else if (state == GAME_OVER) {
-		DrawGameOverMenu();
+	// Ve dau moi
+	gotoXY(head.x + 1, head.y + 1);
+	cout << "O";
+	//Ve than moi
+	if (!tail.empty()) {
+		Point newTail = previousHead;
+		gotoXY(newTail.x + 1, newTail.y + 1);
+		cout << "o";
+	}
+	// Neu an fruit
+	if (ateFruit) {
+		gotoXY(fruit.x + 1, fruit.y + 1);
+		cout << "*";
+	}
+	// Cap nhat score
+	gotoXY(0, height + 2);
+	cout << "Score : " << score
+		<< "                    ";
+	if (state == PLAYING) {
+		gotoXY(0, height + 3);
+		cout << "WASD: Move | P: Pause | X: Exit        ";
 	}
 }
 void SnakeGame::MenuInput() {
@@ -277,7 +342,6 @@ void SnakeGame::MenuInput() {
 		switch (selectedOption) {
 		case START_GAME:
 			ResetGame();
-			selectedGameOverOption = RESTART_GAME;
 			state = PLAYING;
 			Draw();
 			break;
@@ -342,6 +406,17 @@ void SnakeGame::DifficultyInput() {
 		DrawMenu();
 	}
 }
+void SnakeGame::GameOverScreenInput() {
+	if (!_kbhit()) {
+		return;
+	}
+	int key = _getch();
+	if (key == 13) { // ENTER
+		state = GAME_OVER;
+		ClearScreen();
+		DrawGameOverMenu();
+	}
+}
 void SnakeGame::GameOverInput() {
 	if (!_kbhit()) {
 		return;
@@ -398,10 +473,12 @@ void SnakeGame::Input() {
 		case 'P':
 			if (state == PLAYING) {
 				state = PAUSED;
+				ClearScreen();
 				Draw();
 			}
 			else if (state == PAUSED) {
 				state = PLAYING;
+				needFullDraw = true;
 				Draw();
 			}
 			break;
@@ -457,7 +534,16 @@ void SnakeGame::Move() {
 		return;
 	}
 	//vi tri dau cu
-	Point previousHead = head;
+	previousHead = head;
+	//Mac dinh frame nay khong an
+	ateFruit = false;
+	//vi tri duoi cu
+	if (!tail.empty()) {
+		previousTail = tail.back();
+	}
+	else {
+		previousTail = { -1, -1 };
+	}
 	//di chuyen
 	switch (dir) {
 	case LEFT:
@@ -478,6 +564,7 @@ void SnakeGame::Move() {
 	//neu an thuc an
 	if (head.x == fruit.x && head.y == fruit.y) {
 		score += 10;
+		ateFruit = true;
 		//them than moi
 		tail.push_back(previousHead);
 		//tao thuc an moi
@@ -497,17 +584,18 @@ void SnakeGame::Move() {
 void SnakeGame::CheckCollision() {
 	//va tuong
 	if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height) {
-		state = GAME_OVER;
+		state = GAME_OVER_SCREEN;
+		needFullDraw = true;
 		ClearScreen();
-		DrawGameOverMenu();
+		DrawGameOverScreen();
 		return;
 	}
 	//va than
 	for (const auto& t : tail) {
 		if (head.x == t.x && head.y == t.y) {
-			state = GAME_OVER;
+			state = GAME_OVER_SCREEN;
 			ClearScreen();
-			DrawGameOverMenu();
+			DrawGameOverScreen();
 			return;
 		}
 	}
@@ -520,7 +608,11 @@ void SnakeGame::ResetGame() {
 	head.y = height / 2;
 	score = 0;
 	selectedGameOverOption = RESTART_GAME;
+	ateFruit = false;
+	previousHead = head;
+	previousTail = { -1,-1 };
 	SpawnFruit();
+	needFullDraw = true;
 }
 void SnakeGame::Logic() {
 	if (state == PLAYING) {
@@ -562,4 +654,10 @@ bool SnakeGame::IsInDifficultyMenu() const {
 }
 int SnakeGame::GetGameSpeed() const {
 	return gameSpeed;
+}
+bool SnakeGame::IsGameOverScreen() const{
+	return state == GAME_OVER_SCREEN;
+}
+void SnakeGame::RunGameOverScreen() {
+	GameOverScreenInput();
 }
