@@ -3,6 +3,7 @@
 #include <conio.h>
 #include <windows.h>
 #include <cstdlib>
+#include <fstream>
 using namespace std;
 //di chuyen con tro
 void gotoXY(int x, int y) {
@@ -53,11 +54,13 @@ SnakeGame::SnakeGame() {
 	head.x = width / 2;
 	head.y = height / 2;
 	score = 0;
+	highScore = 0;
 	ateFruit = false;
 	needFullDraw = true;
 	previousHead = head;
 	previousTail = { -1,-1 };
 	SpawnFruit();
+	LoadHighScore();
 	DrawMenu();
 }
 void SnakeGame::DrawMenu() {
@@ -103,8 +106,9 @@ void SnakeGame::DrawMenu() {
 	cout << "==========================" << endl;
 }
 void SnakeGame::DrawGameOverScreen() {
-	if(highScore < score){
+	if (highScore < score) {
 		highScore = score;
+		SaveHighScore();
 	}
 	ClearScreen();
 	gotoXY(0, 0);
@@ -622,6 +626,23 @@ void SnakeGame::Logic() {
 	if (state == PLAYING) {
 		Move();
 		CheckCollision();
+	}
+}
+void SnakeGame::LoadHighScore() {
+	ifstream file("data/highscore.txt");
+	if (file.is_open()) {
+		file >> highScore;
+		file.close();
+	}
+	else {
+		highScore = 0;
+	}
+}
+void SnakeGame::SaveHighScore() {
+	ofstream file("data/highscore.txt");
+	if (file.is_open()) {
+		file << highScore;
+		file.close();
 	}
 }
 bool SnakeGame::IsGameOver() const {

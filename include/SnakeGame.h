@@ -71,6 +71,8 @@ private:
 	void GameOverScreenInput();
 	void DrawGameOverMenu();
 	void GameOverInput();
+	void LoadHighScore();
+	void SaveHighScore();
 public:
 	SnakeGame();
 	void Draw();
