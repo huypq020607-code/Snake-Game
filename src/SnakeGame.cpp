@@ -103,6 +103,9 @@ void SnakeGame::DrawMenu() {
 	cout << "==========================" << endl;
 }
 void SnakeGame::DrawGameOverScreen() {
+	if(highScore < score){
+		highScore = score;
+	}
 	ClearScreen();
 	gotoXY(0, 0);
 	cout << "==============================" << endl;
@@ -110,6 +113,7 @@ void SnakeGame::DrawGameOverScreen() {
 	cout << "==============================" << endl;
 	cout << endl;
 	cout << "          YOUR SCORE: " << score << endl;
+	cout << "          HIGH SCORE: " << highScore << endl;
 	cout << endl;
 	cout << "==============================" << endl;
 	cout << "    Press ENTER to continue   " << endl;

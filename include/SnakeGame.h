@@ -44,6 +44,7 @@ private:
 	const int width = 24;
 	const int height = 24;
 	int score;
+	int highScore;
 	Point head;
 	Point fruit;
 	Point previousHead;
