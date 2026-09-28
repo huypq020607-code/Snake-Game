@@ -106,10 +106,6 @@ void SnakeGame::DrawMenu() {
 	cout << "==========================" << endl;
 }
 void SnakeGame::DrawGameOverScreen() {
-	if (highScore < score) {
-		highScore = score;
-		SaveHighScore();
-	}
 	ClearScreen();
 	gotoXY(0, 0);
 	cout << "==============================" << endl;
@@ -214,6 +210,99 @@ void SnakeGame::DrawInstructionsMenu() {
 	cout << "          X: Back             " << endl;
 	cout << "==============================" << endl;
 }
+void SnakeGame::DrawFullBoard() {
+	ClearScreen();
+	// Tuong tren
+	gotoXY(0, 0);
+	for (int i = 0; i < width + 2; i++) {
+		cout << "#";
+	}
+	cout << endl;
+	// Board
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			if (j == 0) {
+				cout << "#";
+			}
+			if (i == head.y && j == head.x) {
+				cout << "O";
+			}
+			else if (i == fruit.y && j == fruit.x) {
+				cout << "*";
+			}
+			else {
+				bool printTail = false;
+				for (const auto& t : tail) {
+					if (t.x == j && t.y == i) {
+						cout << "o";
+						printTail = true;
+						break;
+					}
+				}
+				if (!printTail) {
+					cout << " ";
+				}
+			}
+			if (j == width - 1) {
+				cout << "#";
+			}
+		}
+		cout << endl;
+	}
+	// Tuong duoi
+	for (int i = 0; i < width + 2; i++) {
+		cout << "#";
+	}
+	cout << endl;
+	// Score
+	gotoXY(0, height + 3);
+	cout << "Score: " << score
+		<< "    High Score: " << highScore;
+	cout << endl;
+	// Trang thai
+	if (state == PLAYING) {
+		cout << "WASD: Move | P: Pause | X: Exit        " << endl;
+	}
+	else if (state == PAUSED) {
+		cout << "GAME PAUSED | P: Resume | X: Exit";
+	}
+	needFullDraw = false;
+}
+void SnakeGame::DrawUpdatedBoard() {
+	//Xoa dau cu
+	gotoXY(previousHead.x + 1, previousHead.y + 1);
+	cout << " ";
+	//Neu khong an fruit thi xoa duoi cu
+	if (!ateFruit && previousTail.x >= 0 && previousTail.y >= 0) {
+		gotoXY(previousTail.x + 1, previousTail.y + 1);
+		cout << " ";
+	}
+	// Ve dau moi
+	gotoXY(head.x + 1, head.y + 1);
+	cout << "O";
+	//Ve than moi
+	if (!tail.empty()) {
+		Point newTail = previousHead;
+		gotoXY(newTail.x + 1, newTail.y + 1);
+		cout << "o";
+	}
+	// Neu an fruit
+	if (ateFruit) {
+		gotoXY(fruit.x + 1, fruit.y + 1);
+		cout << "*";
+	}
+	// Cap nhat score
+	gotoXY(0, height + 3);
+	cout << "Score: " << score
+		<< "    High Score: " << highScore;
+	if (state == PLAYING) {
+		gotoXY(0, height + 4);
+		cout << "WASD: Move | P: Pause | X: Exit        " << endl;
+	}
+	else if (state == PAUSED) {
+		cout << "GAME PAUSED | P: Resume | X: Exit";
+	}
+}
 void SnakeGame::Draw() {
 	if (state == MENU) {
 		DrawMenu();
@@ -237,91 +326,12 @@ void SnakeGame::Draw() {
 	}
 	// VE TOAN BO LAN DAU
 	if (needFullDraw) {
-		ClearScreen();
-		// Tuong tren
-		gotoXY(0, 0);
-		for (int i = 0; i < width + 2; i++) {
-			cout << "#";
-		}
-		cout << endl;
-		// Board
-		for (int i = 0; i < height; i++) {
-			for (int j = 0; j < width; j++) {
-				if (j == 0) {
-					cout << "#";
-				}
-				if (i == head.y && j == head.x) {
-					cout << "O";
-				}
-				else if (i == fruit.y && j == fruit.x) {
-					cout << "*";
-				}
-				else {
-					bool printTail = false;
-					for (const auto& t : tail) {
-						if (t.x == j && t.y == i) {
-							cout << "o";
-							printTail = true;
-							break;
-						}
-					}
-					if (!printTail) {
-						cout << " ";
-					}
-				}
-				if (j == width - 1) {
-					cout << "#";
-				}
-			}
-			cout << endl;
-		}
-		// Tuong duoi
-		for (int i = 0; i < width + 2; i++) {
-			cout << "#";
-		}
-		cout << endl;
-		// Score
-		cout << "Score : " << score
-			<< "                    " << endl;
-		// Trang thai
-		if (state == PLAYING) {
-			cout << "WASD: Move | P: Pause | X: Exit        " << endl;
-		}
-		needFullDraw = false;
-		return;
+		DrawFullBoard();
+	}
+	else {
+		DrawUpdatedBoard();
 	}
 	// CHI CAP NHAT PHAN THAY DOI
-	//Xoa dau cu
-	gotoXY(previousHead.x + 1, previousHead.y + 1);
-	cout << " ";
-	//Neu khong an fruit thi xoa duoi cu
-	if (!ateFruit && previousTail.x != -1) {
-
-		gotoXY(previousTail.x + 1, previousTail.y + 1);
-		cout << " ";
-	}
-	// Ve dau moi
-	gotoXY(head.x + 1, head.y + 1);
-	cout << "O";
-	//Ve than moi
-	if (!tail.empty()) {
-		Point newTail = previousHead;
-		gotoXY(newTail.x + 1, newTail.y + 1);
-		cout << "o";
-	}
-	// Neu an fruit
-	if (ateFruit) {
-		gotoXY(fruit.x + 1, fruit.y + 1);
-		cout << "*";
-	}
-	// Cap nhat score
-	gotoXY(0, height + 2);
-	cout << "Score : " << score
-		<< "                    ";
-	if (state == PLAYING) {
-		gotoXY(0, height + 3);
-		cout << "WASD: Move | P: Pause | X: Exit        ";
-	}
 }
 void SnakeGame::MenuInput() {
 	if (!_kbhit()) {
@@ -573,6 +583,11 @@ void SnakeGame::Move() {
 	if (head.x == fruit.x && head.y == fruit.y) {
 		score += 10;
 		ateFruit = true;
+		//cap nhat High Score
+		if (highScore < score) {
+			highScore = score;
+			SaveHighScore();
+		}
 		//them than moi
 		tail.push_back(previousHead);
 		//tao thuc an moi
@@ -594,16 +609,13 @@ void SnakeGame::CheckCollision() {
 	if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height) {
 		state = GAME_OVER_SCREEN;
 		needFullDraw = true;
-		ClearScreen();
-		DrawGameOverScreen();
 		return;
 	}
 	//va than
 	for (const auto& t : tail) {
 		if (head.x == t.x && head.y == t.y) {
 			state = GAME_OVER_SCREEN;
-			ClearScreen();
-			DrawGameOverScreen();
+			needFullDraw = true;
 			return;
 		}
 	}
@@ -680,7 +692,7 @@ bool SnakeGame::IsInDifficultyMenu() const {
 int SnakeGame::GetGameSpeed() const {
 	return gameSpeed;
 }
-bool SnakeGame::IsGameOverScreen() const{
+bool SnakeGame::IsGameOverScreen() const {
 	return state == GAME_OVER_SCREEN;
 }
 void SnakeGame::RunGameOverScreen() {

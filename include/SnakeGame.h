@@ -1,10 +1,12 @@
 #ifndef SNAKEGAME_H
 #define SNAKEGAME_H
 #include <vector>
+// ==================== DATA ====================
 struct Point {
 	int x;
 	int y;
 };
+// ==================== ENUM ====================
 enum Direction {
 	STOP = 0,
 	LEFT,
@@ -38,59 +40,81 @@ enum Difficulty {
 	NORMAL,
 	HARD
 };
+// ==================== SNAKE GAME ====================
 class SnakeGame {
 private:
+	// ---------- Game State ----------
 	GameState state;
+	// ---------- Board ----------
 	const int width = 24;
 	const int height = 24;
+	// ---------- Score ----------
 	int score;
 	int highScore;
+	// ---------- Snake ----------
 	Point head;
 	Point fruit;
+	std::vector<Point> tail;
+	// ---------- Rendering ----------
 	Point previousHead;
 	Point previousTail;
-	std::vector<Point> tail;
-	Direction dir;
-	int selectedOption;
-	int selectedGameOverOption;
-	Difficulty difficulty;
-	int gameSpeed;
 	bool ateFruit;
 	bool needFullDraw;
+	// ---------- Movement ----------
+	Direction dir;
+	// ---------- Menu ----------
+	int selectedOption;
+	int selectedGameOverOption;
+	// ---------- Difficulty ----------
+	Difficulty difficulty;
+	int gameSpeed;
+	// ==================== GAME LOGIC ====================
 	void SpawnFruit();
 	bool IsOnSnake(Point p) const;
 	void Move();
 	void CheckCollision();
-	void DrawMenu();
+	void ResetGame();
+	// ==================== INPUT ====================
 	void MenuInput();
-	void DrawDifficultyMenu();
 	void DifficultyInput();
-	void DrawInstructionsMenu();
 	void InstructionsInput();
-	void DrawGameOverScreen();
 	void GameOverScreenInput();
-	void DrawGameOverMenu();
 	void GameOverInput();
+	// ==================== DRAWING ====================
+	void DrawMenu();
+	void DrawDifficultyMenu();
+	void DrawInstructionsMenu();
+	void DrawGameOverScreen();
+	void DrawGameOverMenu();
+	void DrawFullBoard();
+	void DrawUpdatedBoard();
+	// ==================== HIGH SCORE ====================
 	void LoadHighScore();
 	void SaveHighScore();
 public:
+	// ==================== CONSTRUCTOR ====================
 	SnakeGame();
+	// ==================== GAME LOOP ====================
 	void Draw();
 	void Input();
 	void Logic();
-	void ResetGame();
+	// ==================== MENU ====================
 	void RunMenu();
+	// ==================== GAME OVER ====================
 	bool IsGameOverScreen() const;
 	void RunGameOverScreen();
-	void RunGameOverMenu();
 	bool IsGameOver() const;
+	void RunGameOverMenu();
+	// ==================== STATE ====================
 	bool IsPlaying() const;
 	bool IsPaused() const;
 	bool IsExited() const;
 	bool IsInMenu() const;
 	bool IsInDifficultyMenu() const;
+	// ==================== OTHER ====================
 	int GetGameSpeed() const;
 };
+// ==================== CONSOLE FUNCTIONS ====================
 void gotoXY(int x, int y);
 void hideCursor();
 void ClearScreen();
