@@ -65,173 +65,223 @@ SnakeGame::SnakeGame() {
 }
 void SnakeGame::DrawMenu() {
 	gotoXY(0, 0);
-	cout << "==========================" << endl;
-	cout << "          SNAKE GAME                " << endl;
-	cout << "==========================" << endl;
-	cout << endl;
-	cout << "          MAIN MENU                 " << endl;
-	cout << endl;
+	cout << "================================";
+	gotoXY(0, 1);
+	cout << "          SNAKE GAME            ";
+	gotoXY(0, 2);
+	cout << "================================";
+	gotoXY(0, 4);
+	cout << "           MAIN MENU            ";
 	// START GAME
+	gotoXY(0, 6);
 	if (selectedOption == START_GAME) {
-		cout << "   > START GAME" << endl;
+		cout << "        > START GAME";
 	}
 	else {
-		cout << "     START GAME" << endl;
+		cout << "          START GAME";
 	}
 	// DIFFICULTY
+	gotoXY(0, 7);
 	if (selectedOption == DIFFICULTY) {
-		cout << "   > DIFFICULTY" << endl;
+		cout << "        > DIFFICULTY";
 	}
 	else {
-		cout << "     DIFFICULTY" << endl;
+		cout << "          DIFFICULTY";
 	}
 	// INSTRUCTIONS
+	gotoXY(0, 8);
 	if (selectedOption == INSTRUCTIONS) {
-		cout << "   > INSTRUCTIONS" << endl;
+		cout << "        > INSTRUCTIONS";
 	}
 	else {
-		cout << "     INSTRUCTIONS" << endl;
+		cout << "          INSTRUCTIONS";
 	}
 	// EXIT
+	gotoXY(0, 9);
 	if (selectedOption == EXIT_MENU) {
-		cout << "   > EXIT" << endl;
+		cout << "        > EXIT";
 	}
 	else {
-		cout << "     EXIT" << endl;
+		cout << "          EXIT";
 	}
-	cout << endl;
-	cout << "==========================" << endl;
-	cout << "       W / S: Move" << endl;
-	cout << "       ENTER: Select" << endl;
-	cout << "==========================" << endl;
-}
-void SnakeGame::DrawGameOverScreen() {
-	ClearScreen();
-	gotoXY(0, 0);
-	cout << "==============================" << endl;
-	cout << "          GAME OVER           " << endl;
-	cout << "==============================" << endl;
-	cout << endl;
-	cout << "          YOUR SCORE: " << score << endl;
-	cout << "          HIGH SCORE: " << highScore << endl;
-	cout << endl;
-	cout << "==============================" << endl;
-	cout << "    Press ENTER to continue   " << endl;
-	cout << "==============================" << endl;
+	gotoXY(0, 11);
+	cout << "================================";
+	gotoXY(0, 12);
+	cout << "        W / S : Move            ";
+	gotoXY(0, 13);
+	cout << "        ENTER : Select          ";
+	gotoXY(0, 14);
+	cout << "================================";
 }
 void SnakeGame::DrawGameOverMenu() {
 	gotoXY(0, 0);
-	cout << "==========================" << endl;
-	cout << "         GAME OVER        " << endl;
-	cout << "==========================" << endl;
-	cout << endl;
+	cout << "================================";
+	gotoXY(0, 1);
+	cout << "           GAME OVER            ";
+	gotoXY(0, 2);
+	cout << "================================";
+	gotoXY(0, 4);
+	cout << "         WHAT NEXT?             ";
 	// RESTART GAME
+	gotoXY(0, 6);
 	if (selectedGameOverOption == RESTART_GAME) {
-		cout << "#   > RESTART GAME" << endl;
+		cout << "        > RESTART GAME";
 	}
 	else {
-		cout << "#     RESTART GAME" << endl;
+		cout << "          RESTART GAME";
 	}
 	// MAIN MENU
+	gotoXY(0, 7);
 	if (selectedGameOverOption == MAIN_MENU) {
-		cout << "#   > MAIN MENU" << endl;
+		cout << "        > MAIN MENU";
 	}
 	else {
-		cout << "#     MAIN MENU" << endl;
+		cout << "          MAIN MENU";
 	}
 	// EXIT GAME
+	gotoXY(0, 8);
 	if (selectedGameOverOption == EXIT_GAME) {
-		cout << "#   > EXIT GAME" << endl;
+		cout << "        > EXIT GAME";
 	}
 	else {
-		cout << "#     EXIT GAME" << endl;
+		cout << "          EXIT GAME";
 	}
-	cout << endl;
-	cout << "==========================" << endl;
-	cout << "#       W / S: Move" << endl;
-	cout << "#       ENTER: Select" << endl;
-	cout << "==========================" << endl;
+	gotoXY(0, 10);
+	cout << "================================";
+	gotoXY(0, 11);
+	cout << "        W / S : Move            ";
+	gotoXY(0, 12);
+	cout << "        ENTER : Select          ";
+	gotoXY(0, 13);
+	cout << "================================";
+}
+void SnakeGame::DrawGameOverScreen() {
+	gotoXY(0, 0);
+	cout << "================================";
+	gotoXY(0, 1);
+	cout << "           GAME OVER            ";
+	gotoXY(0, 2);
+	cout << "================================";
+	gotoXY(0, 5);
+	cout << "          FINAL SCORE           ";
+	gotoXY(0, 7);
+	cout << "          Score: " << score;
+	gotoXY(0, 8);
+	cout << "          High Score: " << highScore;
+	gotoXY(0, 10);
+	cout << "================================";
+	gotoXY(0, 12);
+	cout << "      Press ENTER to continue   ";
+	gotoXY(0, 14);
+	cout << "================================";
 }
 void SnakeGame::DrawDifficultyMenu() {
 	gotoXY(0, 0);
-	cout << "==========================" << endl;
-	cout << "        DIFFICULTY        " << endl;
-	cout << "==========================" << endl;
-	cout << endl;
+	cout << "================================";
+	gotoXY(0, 1);
+	cout << "          SNAKE GAME            ";
+	gotoXY(0, 2);
+	cout << "================================";
+	gotoXY(0, 4);
+	cout << "          DIFFICULTY            ";
 	// EASY
+	gotoXY(0, 6);
 	if (difficulty == EASY) {
-		cout << "   > EASY" << endl;
+		cout << "        > EASY";
 	}
 	else {
-		cout << "     EASY" << endl;
+		cout << "          EASY";
 	}
 	// NORMAL
+	gotoXY(0, 7);
 	if (difficulty == NORMAL) {
-		cout << "   > NORMAL" << endl;
+		cout << "        > NORMAL";
 	}
 	else {
-		cout << "     NORMAL" << endl;
+		cout << "          NORMAL";
 	}
 	// HARD
+	gotoXY(0, 8);
 	if (difficulty == HARD) {
-		cout << "   > HARD" << endl;
+		cout << "        > HARD";
 	}
 	else {
-		cout << "     HARD" << endl;
+		cout << "          HARD";
 	}
-	cout << endl;
-	cout << "==========================" << endl;
-	cout << "       W / S: Move" << endl;
-	cout << "       ENTER: Select" << endl;
-	cout << "       X: Back" << endl;
-	cout << "==========================" << endl;
+	gotoXY(0, 10);
+	cout << "================================";
+	gotoXY(0, 11);
+	cout << "        W / S : Move            ";
+	gotoXY(0, 12);
+	cout << "        ENTER : Select          ";
+	gotoXY(0, 13);
+	cout << "        X     : Back            ";
+	gotoXY(0, 14);
+	cout << "================================";
 }
 void SnakeGame::DrawInstructionsMenu() {
 	gotoXY(0, 0);
-	cout << "==============================" << endl;
-	cout << "         INSTRUCTIONS         " << endl;
-	cout << "==============================" << endl;
-	cout << endl;
-	cout << "          HOW TO PLAY         " << endl;
-	cout << endl;
-	cout << "    W / UP    : Move Up       " << endl;
-	cout << "    S / DOWN  : Move Down     " << endl;
-	cout << "    A / LEFT  : Move Left     " << endl;
-	cout << "    D / RIGHT : Move Right    " << endl;
-	cout << endl;
-	cout << "    P         : Pause         " << endl;
-	cout << "    X         : Exit          " << endl;
-	cout << endl;
-	cout << "    Eat *     : +10 Score     " << endl;
-	cout << "    Hit Wall  : Game Over     " << endl;
-	cout << "    Hit Body  : Game Over     " << endl;
-	cout << endl;
-	cout << "==============================" << endl;
-	cout << "          X: Back             " << endl;
-	cout << "==============================" << endl;
+	cout << "================================";
+	gotoXY(0, 1);
+	cout << "          SNAKE GAME            ";
+	gotoXY(0, 2);
+	cout << "================================";
+	gotoXY(0, 4);
+	cout << "         INSTRUCTIONS           ";
+	gotoXY(0, 6);
+	cout << "         HOW TO PLAY            ";
+	gotoXY(0, 8);
+	cout << "        W : Move Up             ";
+	gotoXY(0, 9);
+	cout << "        S : Move Down           ";
+	gotoXY(0, 10);
+	cout << "        A : Move Left           ";
+	gotoXY(0, 11);
+	cout << "        D : Move Right          ";
+	gotoXY(0, 13);
+	cout << "        P : Pause               ";
+	gotoXY(0, 14);
+	cout << "        X : Exit                ";
+	gotoXY(0, 16);
+	cout << "        * : +10 Score           ";
+	gotoXY(0, 17);
+	cout << "        Wall : Game Over        ";
+	gotoXY(0, 18);
+	cout << "        Body : Game Over        ";
+	gotoXY(0, 20);
+	cout << "================================";
+	gotoXY(0, 21);
+	cout << "        X : Back                ";
+	gotoXY(0, 22);
+	cout << "================================";
 }
 void SnakeGame::DrawFullBoard() {
 	ClearScreen();
-	// Tuong tren
+	// ===== BOARD =====
 	gotoXY(0, 0);
+	// Top border
 	for (int i = 0; i < width + 2; i++) {
 		cout << "#";
 	}
 	cout << endl;
-	// Board
+	// Board content
 	for (int i = 0; i < height; i++) {
 		for (int j = 0; j < width; j++) {
+			// Left border
 			if (j == 0) {
 				cout << "#";
 			}
+			// Snake head
 			if (i == head.y && j == head.x) {
 				cout << "O";
 			}
+			// Fruit
 			else if (i == fruit.y && j == fruit.x) {
 				cout << "*";
 			}
 			else {
 				bool printTail = false;
+
 				for (const auto& t : tail) {
 					if (t.x == j && t.y == i) {
 						cout << "o";
@@ -239,68 +289,75 @@ void SnakeGame::DrawFullBoard() {
 						break;
 					}
 				}
+
 				if (!printTail) {
 					cout << " ";
 				}
 			}
+			// Right border
 			if (j == width - 1) {
 				cout << "#";
 			}
 		}
+
 		cout << endl;
 	}
-	// Tuong duoi
+	// Bottom border
 	for (int i = 0; i < width + 2; i++) {
 		cout << "#";
 	}
 	cout << endl;
-	// Score
+	// ===== HUD =====
 	gotoXY(0, height + 3);
 	cout << "Score: " << score
-		<< "    High Score: " << highScore;
-	cout << endl;
-	// Trang thai
+		<< "    High Score: " << highScore
+		<< "        ";
+
+	gotoXY(0, height + 4);
+
 	if (state == PLAYING) {
-		cout << "WASD: Move | P: Pause | X: Exit        " << endl;
+		cout << "WASD: Move | P: Pause | X: Exit        ";
 	}
 	else if (state == PAUSED) {
-		cout << "GAME PAUSED | P: Resume | X: Exit";
+		cout << "          [ GAME PAUSED ]              ";
+		gotoXY(0, height + 5);
+		cout << "          P: Resume | X: Exit           ";
 	}
 	needFullDraw = false;
 }
 void SnakeGame::DrawUpdatedBoard() {
-	//Xoa dau cu
+	// Xóa vị trí đầu cũ
 	gotoXY(previousHead.x + 1, previousHead.y + 1);
 	cout << " ";
-	//Neu khong an fruit thi xoa duoi cu
+	// Xóa đuôi cũ
 	if (!ateFruit && previousTail.x >= 0 && previousTail.y >= 0) {
 		gotoXY(previousTail.x + 1, previousTail.y + 1);
 		cout << " ";
 	}
-	// Ve dau moi
-	gotoXY(head.x + 1, head.y + 1);
-	cout << "O";
-	//Ve than moi
+	// Vẽ thân mới tại vị trí đầu cũ
 	if (!tail.empty()) {
-		Point newTail = previousHead;
-		gotoXY(newTail.x + 1, newTail.y + 1);
+		gotoXY(previousHead.x + 1, previousHead.y + 1);
 		cout << "o";
 	}
-	// Neu an fruit
+	// Vẽ đầu mới
+	gotoXY(head.x + 1, head.y + 1);
+	cout << "O";
+	// Nếu ăn trái cây thì vẽ trái cây mới
 	if (ateFruit) {
 		gotoXY(fruit.x + 1, fruit.y + 1);
 		cout << "*";
 	}
-	// Cap nhat score
+	// ===== HUD =====
 	gotoXY(0, height + 3);
 	cout << "Score: " << score
-		<< "    High Score: " << highScore;
+		<< "    High Score: " << highScore
+		<< "        ";
+	gotoXY(0, height + 4);
 	if (state == PLAYING) {
-		gotoXY(0, height + 4);
-		cout << "WASD: Move | P: Pause | X: Exit        " << endl;
+		cout << "WASD: Move | P: Pause | X: Exit        ";
 	}
 	else if (state == PAUSED) {
-		cout << "GAME PAUSED | P: Resume | X: Exit";
+		cout << "GAME PAUSED | P: Resume | X: Exit     ";
 	}
 }
 void SnakeGame::Draw() {
@@ -491,6 +548,7 @@ void SnakeGame::Input() {
 		case 'P':
 			if (state == PLAYING) {
 				state = PAUSED;
+				needFullDraw = true;
 				ClearScreen();
 				Draw();
 			}
@@ -609,6 +667,8 @@ void SnakeGame::CheckCollision() {
 	if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height) {
 		state = GAME_OVER_SCREEN;
 		needFullDraw = true;
+		ClearScreen();
+		DrawGameOverScreen();
 		return;
 	}
 	//va than
@@ -616,6 +676,8 @@ void SnakeGame::CheckCollision() {
 		if (head.x == t.x && head.y == t.y) {
 			state = GAME_OVER_SCREEN;
 			needFullDraw = true;
+			ClearScreen();
+			DrawGameOverScreen();
 			return;
 		}
 	}
