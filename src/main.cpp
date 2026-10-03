@@ -13,6 +13,7 @@ int main() {
 	while (!game.IsExited()) {
 		if (game.IsInMenu()) {
 			game.RunMenu();
+			Sleep(50);
 		}
 		else if (game.IsPlaying()) {
 			game.Input();
@@ -34,9 +35,9 @@ int main() {
 		}
 	}
 	gotoXY(0, 23);
-	cout << "===============================================" << endl;
-	cout << "----    Thank you for your playing !!!!    ----" << endl;
-	cout << "===============================================" << endl;
+	cout << "================================================" << endl;
+	cout << "----       THANK YOU FOR PLAYING !!!!       ----" << endl;
+	cout << "================================================" << endl;
 	system("pause"); // Dung man hinh de ban xem diem so truoc khi dong
 	return 0;
 }

@@ -49,7 +49,7 @@ SnakeGame::SnakeGame() {
 	selectedOption = START_GAME;
 	selectedGameOverOption = RESTART_GAME;
 	difficulty = NORMAL;
-	gameSpeed = 60;
+	gameSpeed = 64;
 	dir = STOP;
 	head.x = width / 2;
 	head.y = height / 2;
@@ -365,10 +365,6 @@ void SnakeGame::Draw() {
 		DrawMenu();
 		return;
 	}
-	if (state == GAME_OVER) {
-		DrawGameOverMenu();
-		return;
-	}
 	if (state == DIFFICULTY_MENU) {
 		DrawDifficultyMenu();
 		return;
@@ -381,14 +377,16 @@ void SnakeGame::Draw() {
 		DrawGameOverScreen();
 		return;
 	}
-	// VE TOAN BO LAN DAU
+	if (state == GAME_OVER) {
+		DrawGameOverMenu();
+		return;
+	}
 	if (needFullDraw) {
 		DrawFullBoard();
 	}
 	else {
 		DrawUpdatedBoard();
 	}
-	// CHI CAP NHAT PHAN THAY DOI
 }
 void SnakeGame::MenuInput() {
 	if (!_kbhit()) {
@@ -417,7 +415,6 @@ void SnakeGame::MenuInput() {
 		switch (selectedOption) {
 		case START_GAME:
 			ResetGame();
-			state = PLAYING;
 			Draw();
 			break;
 		case DIFFICULTY:
