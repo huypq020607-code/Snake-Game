@@ -16,7 +16,7 @@ int main() {
 			Sleep(50);
 		}
 		else if (game.IsPlaying()) {
-			game.Input();
+			game.ControlSnake();
 			game.Logic();
 			game.Draw();
 			Sleep(game.GetGameSpeed()); //dieu chinh toc do game (ms)

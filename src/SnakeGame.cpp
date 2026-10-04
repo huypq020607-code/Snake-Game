@@ -50,6 +50,8 @@ SnakeGame::SnakeGame() {
 	selectedGameOverOption = RESTART_GAME;
 	difficulty = NORMAL;
 	gameSpeed = 64;
+	controlMode = HUMAN_MODE;
+	selectedGameMode = HUMAN_MODE;
 	dir = STOP;
 	head.x = width / 2;
 	head.y = height / 2;
@@ -80,8 +82,16 @@ void SnakeGame::DrawMenu() {
 	else {
 		cout << "          START GAME";
 	}
-	// DIFFICULTY
+	// GAME MODE
 	gotoXY(0, 7);
+	if (selectedOption == GAME_MODE) {
+		cout << "        > GAME MODE";
+	}
+	else {
+		cout << "          GAME MODE";
+	}
+	// DIFFICULTY
+	gotoXY(0, 8);
 	if (selectedOption == DIFFICULTY) {
 		cout << "        > DIFFICULTY";
 	}
@@ -89,7 +99,7 @@ void SnakeGame::DrawMenu() {
 		cout << "          DIFFICULTY";
 	}
 	// INSTRUCTIONS
-	gotoXY(0, 8);
+	gotoXY(0, 9);
 	if (selectedOption == INSTRUCTIONS) {
 		cout << "        > INSTRUCTIONS";
 	}
@@ -97,21 +107,47 @@ void SnakeGame::DrawMenu() {
 		cout << "          INSTRUCTIONS";
 	}
 	// EXIT
-	gotoXY(0, 9);
+	gotoXY(0, 10);
 	if (selectedOption == EXIT_MENU) {
 		cout << "        > EXIT";
 	}
 	else {
 		cout << "          EXIT";
 	}
-	gotoXY(0, 11);
-	cout << "================================";
 	gotoXY(0, 12);
-	cout << "        W / S : Move            ";
-	gotoXY(0, 13);
-	cout << "        ENTER : Select          ";
-	gotoXY(0, 14);
 	cout << "================================";
+	gotoXY(0, 13);
+	cout << "        W / S : Move            ";
+	gotoXY(0, 14);
+	cout << "        ENTER : Select          ";
+	gotoXY(0, 15);
+	cout << "================================";
+}
+void SnakeGame::DrawGameModeMenu() {
+	gotoXY(0, 0);
+	cout << "===============================================";
+	gotoXY(0, 1);
+	cout << "                 GAME MODE                    ";
+	gotoXY(0, 2);
+	cout << "===============================================";
+	gotoXY(0, 5);
+	cout << "                 ";
+	cout << (selectedGameMode == HUMAN_MODE ? "> " : "  ");
+	cout << "HUMAN                    ";
+	gotoXY(0, 6);
+	cout << "                 ";
+	cout << (selectedGameMode == AI_MODE ? "> " : "  ");
+	cout << "AI                    ";
+	gotoXY(0, 8);
+	cout << "===============================================";
+	gotoXY(0, 9);
+	cout << "                 W/S : Select";
+	gotoXY(0, 10);
+	cout << "                 ENTER : Confirm";
+	gotoXY(0, 11);
+	cout << "                 X : Back" << endl;
+	gotoXY(0, 12);
+	cout << "===============================================";
 }
 void SnakeGame::DrawGameOverMenu() {
 	gotoXY(0, 0);
@@ -365,6 +401,10 @@ void SnakeGame::Draw() {
 		DrawMenu();
 		return;
 	}
+	if (state == GAME_MODE_MENU) {
+		DrawGameModeMenu();
+		return;
+	}
 	if (state == DIFFICULTY_MENU) {
 		DrawDifficultyMenu();
 		return;
@@ -417,6 +457,11 @@ void SnakeGame::MenuInput() {
 			ResetGame();
 			Draw();
 			break;
+		case GAME_MODE:
+			state = GAME_MODE_MENU;
+			ClearScreen();
+			DrawGameModeMenu();
+			break;
 		case DIFFICULTY:
 			state = DIFFICULTY_MENU;
 			ClearScreen();
@@ -431,6 +476,41 @@ void SnakeGame::MenuInput() {
 			state = EXITED;
 			break;
 		}
+	}
+}
+void SnakeGame::GameModeInput() {
+	if (!_kbhit()) return;
+	int key = _getch();
+	if (key == 'w' || key == 'W') {
+		int current = static_cast<int>(selectedGameMode);
+		current--;
+		if (current < HUMAN_MODE) {
+			current = AI_MODE;
+		}
+		selectedGameMode = static_cast<ControlMode>(current);
+		DrawGameModeMenu();
+	}
+	else if (key == 's' || key == 'S') {
+		int current = static_cast<int>(selectedGameMode);
+		current++;
+		if (current > AI_MODE) {
+			current = HUMAN_MODE;
+		}
+		selectedGameMode = static_cast<ControlMode>(current);
+		DrawGameModeMenu();
+	}
+	else if (key == 13) {
+		controlMode = static_cast<ControlMode>(selectedGameMode);
+		state = MENU;
+		selectedOption = GAME_MODE;
+		ClearScreen();
+		DrawMenu();
+	}
+	else if (key == 'x' || key == 'X') {
+		state = MENU;
+		selectedOption = GAME_MODE;
+		ClearScreen();
+		DrawMenu();
 	}
 }
 void SnakeGame::DifficultyInput() {
@@ -538,6 +618,13 @@ void SnakeGame::InstructionsInput() {
 		DrawMenu();
 	}
 }
+void SnakeGame::AIInput() {
+	if (state != PLAYING) {
+		return;
+	}
+	dir = ai.GetNextDirection(head, fruit);
+}
+
 void SnakeGame::Input() {
 	if (_kbhit()) { //kiem tra neu co phim bam vao
 		switch (_getch()) {
@@ -716,6 +803,14 @@ void SnakeGame::SaveHighScore() {
 		file.close();
 	}
 }
+void SnakeGame::ControlSnake() {
+	if (controlMode == HUMAN_MODE) {
+		Input();
+	}
+	else if (controlMode == AI_MODE) {
+		AIInput();
+	}
+}
 bool SnakeGame::IsGameOver() const {
 	return state == GAME_OVER;
 }
@@ -726,11 +821,17 @@ bool SnakeGame::IsExited() const {
 	return state == EXITED;
 }
 bool SnakeGame::IsInMenu() const {
-	return state == MENU || state == DIFFICULTY_MENU || state == INSTRUCTIONS_MENU;
+	return state == MENU ||
+		state == GAME_MODE_MENU ||
+		state == DIFFICULTY_MENU ||
+		state == INSTRUCTIONS_MENU;
 }
 void SnakeGame::RunMenu() {
 	if (state == MENU) {
 		MenuInput();
+	}
+	else if (state == GAME_MODE_MENU) {
+		GameModeInput();
 	}
 	else if (state == DIFFICULTY_MENU) {
 		DifficultyInput();

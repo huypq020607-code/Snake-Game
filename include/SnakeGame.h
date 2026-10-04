@@ -1,21 +1,12 @@
 #ifndef SNAKEGAME_H
 #define SNAKEGAME_H
 #include <vector>
-// ==================== DATA ====================
-struct Point {
-	int x;
-	int y;
-};
+#include "GameTypes.h"
+#include "SnakeAI.h"
 // ==================== ENUM ====================
-enum Direction {
-	STOP = 0,
-	LEFT,
-	RIGHT,
-	UP,
-	DOWN
-};
 enum GameState {
 	MENU,
+	GAME_MODE_MENU,
 	DIFFICULTY_MENU,
 	INSTRUCTIONS_MENU,
 	PLAYING,
@@ -26,6 +17,7 @@ enum GameState {
 };
 enum MenuOption {
 	START_GAME = 0,
+	GAME_MODE,
 	DIFFICULTY,
 	INSTRUCTIONS,
 	EXIT_MENU
@@ -55,6 +47,8 @@ private:
 	Point head;
 	Point fruit;
 	std::vector<Point> tail;
+	// ----AI----
+	SnakeAI ai;
 	// ---------- Rendering ----------
 	Point previousHead;
 	Point previousTail;
@@ -65,8 +59,11 @@ private:
 	// ---------- Menu ----------
 	int selectedOption;
 	int selectedGameOverOption;
+	int selectedGameMode;
 	// ---------- Difficulty ----------
 	Difficulty difficulty;
+	// ---------- Control Mode ----------
+	ControlMode controlMode;
 	int gameSpeed;
 	// ==================== GAME LOGIC ====================
 	void SpawnFruit();
@@ -76,12 +73,14 @@ private:
 	void ResetGame();
 	// ==================== INPUT ====================
 	void MenuInput();
+	void GameModeInput();
 	void DifficultyInput();
 	void InstructionsInput();
 	void GameOverScreenInput();
 	void GameOverInput();
 	// ==================== DRAWING ====================
 	void DrawMenu();
+	void DrawGameModeMenu();
 	void DrawDifficultyMenu();
 	void DrawInstructionsMenu();
 	void DrawGameOverScreen();
@@ -97,6 +96,8 @@ public:
 	// ==================== GAME LOOP ====================
 	void Draw();
 	void Input();
+	void AIInput();
+	void ControlSnake();
 	void Logic();
 	// ==================== MENU ====================
 	void RunMenu();
