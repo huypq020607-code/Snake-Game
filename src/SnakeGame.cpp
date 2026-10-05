@@ -622,9 +622,15 @@ void SnakeGame::AIInput() {
 	if (state != PLAYING) {
 		return;
 	}
-	dir = ai.GetNextDirection(head, fruit);
+	Direction newDirection = ai.GetNextDirection(head, fruit, tail, dir, width, height);
+	// AI khong con nuoc di
+	if (newDirection == STOP) {
+		state = GAME_OVER_SCREEN;
+		needFullDraw = true;
+		return;
+	}
+	dir = newDirection;
 }
-
 void SnakeGame::Input() {
 	if (_kbhit()) { //kiem tra neu co phim bam vao
 		switch (_getch()) {
@@ -721,28 +727,31 @@ void SnakeGame::Move() {
 	default:
 		break;
 	}
-	//neu an thuc an
 	if (head.x == fruit.x && head.y == fruit.y) {
-		score += 10;
 		ateFruit = true;
-		//cap nhat High Score
+		score += 10;
 		if (highScore < score) {
 			highScore = score;
 			SaveHighScore();
 		}
-		//them than moi
-		tail.push_back(previousHead);
-		//tao thuc an moi
-		SpawnFruit();
 	}
-	else {
-		//di chuyen than
-		if (!tail.empty()) {
-			for (int i = static_cast<int>(tail.size()) - 1;i > 0;i--) {
-				tail[i] = tail[i - 1];
-			}
-			tail[0] = previousHead;
+	//di chuyen than
+	if (!tail.empty()) {
+		for (int i = static_cast<int>(tail.size()) - 1;i > 0;i--) {
+			tail[i] = tail[i - 1];
 		}
+		tail[0] = previousHead;
+	}
+	//neu an thuc an
+	if (ateFruit) {
+		//them duoi moi
+		if (tail.empty()) {
+			tail.push_back(previousHead);
+		}
+		else {
+			tail.push_back(previousTail);
+		}
+		SpawnFruit();
 	}
 }
 // va cham
@@ -784,6 +793,10 @@ void SnakeGame::Logic() {
 	if (state == PLAYING) {
 		Move();
 		CheckCollision();
+	}
+	//neu va cham thi dung
+	if (state != PLAYING) {
+		return;
 	}
 }
 void SnakeGame::LoadHighScore() {
@@ -856,5 +869,10 @@ bool SnakeGame::IsGameOverScreen() const {
 	return state == GAME_OVER_SCREEN;
 }
 void SnakeGame::RunGameOverScreen() {
-	GameOverScreenInput();
+    if (needFullDraw) {
+        ClearScreen();
+        DrawGameOverScreen();
+        needFullDraw = false;
+    }
+    GameOverScreenInput();
 }

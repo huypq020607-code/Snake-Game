@@ -18,7 +18,9 @@ int main() {
 		else if (game.IsPlaying()) {
 			game.ControlSnake();
 			game.Logic();
-			game.Draw();
+			if (game.IsPlaying()) {
+				game.Draw();
+			}
 			Sleep(game.GetGameSpeed()); //dieu chinh toc do game (ms)
 		}
 		else if (game.IsPaused()) {
