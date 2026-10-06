@@ -125,29 +125,29 @@ void SnakeGame::DrawMenu() {
 }
 void SnakeGame::DrawGameModeMenu() {
 	gotoXY(0, 0);
-	cout << "===============================================";
+	cout << "================================";
 	gotoXY(0, 1);
-	cout << "                 GAME MODE                    ";
+	cout << "        GAME MODE        ";
 	gotoXY(0, 2);
-	cout << "===============================================";
+	cout << "================================";
 	gotoXY(0, 5);
-	cout << "                 ";
+	cout << "        ";
 	cout << (selectedGameMode == HUMAN_MODE ? "> " : "  ");
-	cout << "HUMAN                    ";
+	cout << "HUMAN        ";
 	gotoXY(0, 6);
-	cout << "                 ";
+	cout << "        ";
 	cout << (selectedGameMode == AI_MODE ? "> " : "  ");
-	cout << "AI                    ";
+	cout << "AI        ";
 	gotoXY(0, 8);
-	cout << "===============================================";
+	cout << "================================";
 	gotoXY(0, 9);
-	cout << "                 W/S : Select";
+	cout << "        W/S : Select";
 	gotoXY(0, 10);
-	cout << "                 ENTER : Confirm";
+	cout << "        ENTER : Confirm";
 	gotoXY(0, 11);
-	cout << "                 X : Back" << endl;
+	cout << "        X : Back" << endl;
 	gotoXY(0, 12);
-	cout << "===============================================";
+	cout << "================================";
 }
 void SnakeGame::DrawGameOverMenu() {
 	gotoXY(0, 0);
@@ -869,10 +869,10 @@ bool SnakeGame::IsGameOverScreen() const {
 	return state == GAME_OVER_SCREEN;
 }
 void SnakeGame::RunGameOverScreen() {
-    if (needFullDraw) {
-        ClearScreen();
-        DrawGameOverScreen();
-        needFullDraw = false;
-    }
-    GameOverScreenInput();
+	if (needFullDraw) {
+		ClearScreen();
+		DrawGameOverScreen();
+		needFullDraw = false;
+	}
+	GameOverScreenInput();
 }
