@@ -45,6 +45,7 @@ private:
 		int width,
 		int height
 	);
+	//mo phong buoc di
 	void SimulateMove(
 		Point head,
 		Direction dir,
@@ -53,6 +54,16 @@ private:
 		Point& newHead,
 		std::vector<Point>& newTail,
 		bool& ateFruit
+	);
+	//danh gia tuong lai
+	int EvaluateFuture(
+		Point head,
+		Point fruit,
+		const std::vector<Point>& tail,
+		Direction currentDirection,
+		int width,
+		int height,
+		int depth
 	);
 public:
 	//ham chinh cua AI
