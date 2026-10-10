@@ -16,6 +16,7 @@ private:
 	bool CheckSafeMove(
 		Point head,
 		Direction dir,
+		Point fruit,
 		const std::vector<Point>& tail,
 		int width,
 		int height
@@ -63,7 +64,17 @@ private:
 		Direction currentDirection,
 		int width,
 		int height,
+		bool fruitAvailble,
 		int depth
+	);
+	//danh gia trang thai
+	int EvaluatePosition(
+		Point head,
+		Point fruit,
+		const std::vector<Point>& tail,
+		int width,
+		int height,
+		bool fruitAvailable
 	);
 public:
 	//ham chinh cua AI

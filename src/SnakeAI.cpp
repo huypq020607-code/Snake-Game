@@ -6,7 +6,7 @@
 bool CheckTail(
 	Point p,
 	const std::vector<Point>& tail
-) {
+){
 	for (int i = 0; i < tail.size(); i++) {
 		if (p.x == tail[i].x && p.y == tail[i].y) {
 			return true;
@@ -20,49 +20,31 @@ bool CheckValid(
 	const std::vector<Point>& tail,
 	int width,
 	int height
-) {
+){
 	//kiem tra tuong
 	if (p.x < 0 || p.x >= width ||
 		p.y < 0 || p.y >= height) {
 		return false;
 	}
-	//kiem tra tail
-	if (CheckTail(p, tail)) {
-		return false;
-	}
-	return true;
+	// Kiem tra than ran
+	return !CheckTail(p, tail);
 }
 //kiem tra huong di chuyen co an toan khong
 bool SnakeAI::CheckSafeMove(
 	Point head,
 	Direction dir,
+	Point fruit,
 	const std::vector<Point>& tail,
 	int width,
 	int height
 ) {
-	Point next = head;
-	switch (dir) {
-	case LEFT:
-		next.x--;
-		break;
-	case RIGHT:
-		next.x++;
-		break;
-	case UP:
-		next.y--;
-		break;
-	case DOWN:
-		next.y++;
-		break;
-	default:
-		break;
-	}
-	return CheckValid(
-		next,
-		tail,
-		width,
-		height
-	);
+	Point newHead;
+	std::vector<Point> newTail;
+	bool ateFruit;
+	// Mo phong nuoc di
+	SimulateMove(head, dir, fruit, tail,newHead, newTail, ateFruit);
+	// Kiem tra dau moi va than ran moi
+	return CheckValid(newHead, newTail, width, height);
 }
 // BFS tim duong tu head->fruit
 Direction SnakeAI::FindPathBFS(
@@ -209,7 +191,7 @@ Direction SnakeAI::FindSafeDirection(
 			continue;
 		}
 		//huong nay co an toan khong
-		if (!CheckSafeMove(head, dir, tail, width, height)) {
+		if (!CheckSafeMove(head, dir, fruit, tail, width, height)) {
 			continue;
 		}
 		//mo phong nuoc di
@@ -218,7 +200,7 @@ Direction SnakeAI::FindSafeDirection(
 		bool ateFruit;
 		SimulateMove(head, dir, fruit, tail, newHead, newTail, ateFruit);
 		//tinh diem cua tuong lai
-		int futureScore = EvaluateFuture(newHead, fruit, newTail, dir, width, height, 2);
+		int futureScore = EvaluateFuture(newHead, fruit, newTail, dir, width, height, true, 2);
 		if (futureScore > bestScore) {
 			bestScore = futureScore;
 			bestDirection = dir;
@@ -239,23 +221,13 @@ bool SnakeAI::IsSafeAfterMove(
 	bool ateFruit;
 	//mo phong nuoc di
 	SimulateMove(head, dir, fruit, tail, newHead, newTail, ateFruit);
-	//kiem tra tuong
-	if (newHead.x < 0 || newHead.x >= width || newHead.y < 0 || newHead.y >= height) {
+	//kiem tra tuong va than ran
+	if (!CheckValid(newHead, newTail, width, height)) {
 		return false;
-	}
-	//kiem tra dau moi co dam vao than moi khong
-	for (const auto& part : newTail) {
-		if (newHead.x == part.x && newHead.y == part.y) {
-			return false;
-		}
 	}
 	//kiem tra sau khi di con khong gian di chuyen khong
 	int reachable = CountReachableCells(newHead, newTail, width, height);
-	//neu con 1 o thi rat nguy hiem
-	if (reachable <= 1) {
-		return false;
-	}
-	return true;
+	return reachable > 1;
 }
 //mo phong duong di
 void SnakeAI::SimulateMove(
@@ -313,13 +285,12 @@ int SnakeAI::EvaluateFuture(
 	Direction currentDirection,
 	int width,
 	int height,
+	bool fruitAvailable,
 	int depth
 ){
 	// da nhin du so buoc
 	if (depth == 0) {
-		int reachable = CountReachableCells(head, tail, width, height);
-		int distance = Distance(head, fruit);
-		return reachable * 10 - distance;
+		return EvaluatePosition(head, fruit, tail, width, height, fruitAvailable);
 	}
 	Direction directions[4] = { UP,DOWN,LEFT,RIGHT };
 	int bestScore = -1000000;
@@ -329,15 +300,20 @@ int SnakeAI::EvaluateFuture(
 		if (IsOppositeDirection(currentDirection, dir)) {
 			continue;
 		}
+		//neu fruit da bi an khong dung lai toa do cu
+		Point targetFruit = fruit;
+		if (!fruitAvailable) {
+			targetFruit = { -1,-1 };
+		}
 		//nuoc di hien tai co an toan khong
-		if (!CheckSafeMove(head, dir, tail, width, height)) {
+		if (!CheckSafeMove(head, dir, targetFruit, tail, width, height)) {
 			continue;
 		}
 		//mo phong
 		Point newHead;
 		std::vector<Point> newTail;
 		bool ateFruit;
-		SimulateMove(head, dir, fruit, tail, newHead, newTail, ateFruit);
+		SimulateMove(head, dir, targetFruit, tail, newHead, newTail, ateFruit);
 		//ra ngoai ban do
 		if (newHead.x < 0 || newHead.x >= width || newHead.y < 0 || newHead.y >= height) {
 			continue;
@@ -353,13 +329,48 @@ int SnakeAI::EvaluateFuture(
 		if (collision) {
 			continue;
 		}
-		//tinh diem cua trang thai tiep theo
-		int score = EvaluateFuture(newHead, fruit, newTail, dir, width, height, depth - 1);
-		if (score > bestScore) {
-			bestScore = score;
+		//Neu an fruit thi cac buoc sau khong danh gia theo vi tri fruit cu nua
+		int futureScore = EvaluateFuture(newHead, fruit, newTail, dir, width, height, fruitAvailable && !ateFruit, depth - 1);
+		if (ateFruit) {
+			futureScore += 20;
+		}
+		if (futureScore > bestScore) {
+			bestScore = futureScore;
 		}
 	}
+	// Khong tim duoc nuoc di hop le
+	if (bestScore == -1000000) {
+		return -100000;
+	}
 	return bestScore;
+}
+//danh gia trang thai
+int SnakeAI::EvaluatePosition(
+	Point head,
+	Point fruit,
+	const std::vector<Point>& tail,
+	int width,
+	int height,
+	bool fruitAvailable
+){
+	int reachable = CountReachableCells(head, tail, width, height);
+	//khong gian qua hep
+	if (reachable <= 2) {
+		return -10000 + reachable;
+	}
+	int score = reachable * 10;
+	// Phat them neu khong gian di chuyen qua nho
+	if (reachable <= 5) {
+		score -= 100;
+	}
+	else if (reachable <= 10) {
+		score -= 30;
+	}
+	//chi danh gia khoang cach neu fruit con ton tai
+	if (fruitAvailable) {
+		score -= Distance(head, fruit);
+	}
+	return score;
 }
 // Ham AI chinh
 Direction SnakeAI::GetNextDirection(
