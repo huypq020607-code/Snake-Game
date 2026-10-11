@@ -2,15 +2,39 @@
 #define SNAKEAI_H
 #include <vector>
 #include "GameTypes.h"
+#include <queue>
+#include <string>
 class SnakeAI {
 private:
+	struct SearchState {
+		Point head;
+		std::vector<Point> tail;
+		// Huong di dau tien tu vi tri ban dau
+		Direction firstDirection;
+		// Huong di cua buoc gan nhat
+		Direction currentDirection;
+	};
+	struct AStarNode {
+    		SearchState state;
+    		int g;  // So buoc da di
+    		int h;  // Uoc luong khoang cach den fruit
+	};
 	//BFS tim duong tu head toi fruit
 	Direction FindPathBFS(
 		Point head,
 		Point fruit,
 		const std::vector<Point>& tail,
+		Direction currentDirection,
 		int width,
 		int height
+	);
+	Direction FindPathAStar(
+    		Point head,
+    		Point fruit,
+    		const std::vector<Point>& tail,
+    		Direction currentDirection,
+    		int width,
+    		int height
 	);
 	//kiem tra huong di co an toan khong
 	bool CheckSafeMove(
@@ -75,6 +99,15 @@ private:
 		int width,
 		int height,
 		bool fruitAvailable
+	);
+	//kiem tra sau khi an
+	bool IsSafeAfterEating(
+		Point head,
+		Direction dir,
+		Point fruit,
+		const std::vector<Point>& tail,
+		int width,
+		int height
 	);
 public:
 	//ham chinh cua AI
