@@ -4,6 +4,9 @@
 #include "GameTypes.h"
 #include <queue>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <cstdlib>
 class SnakeAI {
 private:
 	struct SearchState {
@@ -15,9 +18,10 @@ private:
 		Direction currentDirection;
 	};
 	struct AStarNode {
-    		SearchState state;
-    		int g;  // So buoc da di
-    		int h;  // Uoc luong khoang cach den fruit
+		SearchState state;
+		int g;  // So buoc da di
+		int h;  // Uoc luong khoang cach den fruit
+		std::vector<Direction> path; // Toan bo duong di
 	};
 	//BFS tim duong tu head toi fruit
 	Direction FindPathBFS(
@@ -28,13 +32,14 @@ private:
 		int width,
 		int height
 	);
+	//tim duong di A*
 	Direction FindPathAStar(
-    		Point head,
-    		Point fruit,
-    		const std::vector<Point>& tail,
-    		Direction currentDirection,
-    		int width,
-    		int height
+		Point head,
+		Point fruit,
+		const std::vector<Point>& tail,
+		Direction currentDirection,
+		int width,
+		int height
 	);
 	//kiem tra huong di co an toan khong
 	bool CheckSafeMove(
@@ -109,6 +114,19 @@ private:
 		int width,
 		int height
 	);
+	// Duong di A* da tim duoc
+	std::vector<Direction> cachedPath;
+	// Vi tri tiep theo trong duong di
+	size_t pathIndex = 0;
+	// Fruit ma duong di hien tai dang huong toi
+	Point cachedFruit = { -1, -1 };
+	void ClearCachedPath();
+	int astarCallCount = 0;
+	int cacheInvalidationCount = 0;
+	//lan tim duong gan nhat co that bai hay khong
+	bool lastSearchFailed = false;
+	//so luot con lai truoc khi thu lai A*
+	int failedSearchCooldown = 0;
 public:
 	//ham chinh cua AI
 	Direction GetNextDirection(
@@ -119,5 +137,22 @@ public:
 		int width,
 		int height
 	);
+	//A* tra ve toan bo duong di
+	std::vector<Direction> FindPathAStarPath(
+		Point head,
+		Point fruit,
+		const std::vector<Point>& tail,
+		Direction currentDirection,
+		int width,
+		int height
+	);
+	//bo dem so lan chay A*
+	int GetAStarCallCount() const {
+		return astarCallCount;
+	}
+	//thong tin debug
+	int GetCacheInvalidationCount() const {
+		return cacheInvalidationCount;
+	}
 };
 #endif
