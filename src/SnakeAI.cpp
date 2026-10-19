@@ -9,7 +9,6 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
-//dinh nghia ham 
 bool IsOppositeDirection(Direction current, Direction next);
 //xoa duong di da luu
 void SnakeAI::ClearCachedPath() {
@@ -542,6 +541,7 @@ Direction SnakeAI::FindSafeDirection(
 	Direction directions[4] = { UP,DOWN,LEFT,RIGHT };
 	Direction bestDirection = STOP;
 	int bestScore = -1000000;
+	int bestReachable = -1;
 	for (int i = 0;i < 4;i++) {
 		Direction dir = directions[i];
 		//khong duoc quay nguoc dau
@@ -558,9 +558,14 @@ Direction SnakeAI::FindSafeDirection(
 		bool ateFruit;
 		SimulateMove(head, dir, fruit, tail, newHead, newTail, ateFruit);
 		//tinh diem cua tuong lai
-		int futureScore = EvaluateFuture(newHead, fruit, newTail, dir, width, height, true, 2);
-		if (futureScore > bestScore) {
+		int futureScore = EvaluateFuture(newHead, fruit, newTail, dir, width, height, !ateFruit, 2);
+		// Dem so o co the tiep can
+		int reachable = CountReachableCells(newHead, newTail, width, height);
+		// uu tien diem cao hon neu bang thi uu tien o rong hon
+		if (futureScore > bestScore ||
+			(futureScore == bestScore && reachable > bestReachable)) {
 			bestScore = futureScore;
+			bestReachable = reachable;
 			bestDirection = dir;
 		}
 	}
