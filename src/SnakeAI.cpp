@@ -9,6 +9,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
+//dinh nghia ham 
 bool IsOppositeDirection(Direction current, Direction next);
 //xoa duong di da luu
 void SnakeAI::ClearCachedPath() {
@@ -496,35 +497,53 @@ int SnakeAI::CountReachableCells(
 	int width,
 	int height
 ) {
+	if (width <= 0 || height <= 0) {
+		return 0;
+	}
 	if (start.x < 0 || start.x >= width || start.y < 0 || start.y >= height) {
 		return 0;
 	}
-	std::queue<Point> q;
-	std::vector<std::vector<bool>> visited(
-		height, std::vector<bool>(width, false));
-	q.push(start);
-	visited[start.y][start.x] = true;
+	int totalCells = width * height;
+	// Danh dau cac o bi than ran chiem
+	std::vector<unsigned char> blocked(totalCells, 0);
+	for (const Point& part : tail) {
+		if (part.x >= 0 && part.x < width &&
+			part.y >= 0 && part.y < height) {
+			int index = part.y * width + part.x;
+			blocked[index] = 1;
+		}
+	}
+	// Mang danh dau cac o da tham
+	std::vector<unsigned char> visited(totalCells, 0);
+	// Dung vector lam hang doi BFS
+	// Tranh cap phat bo nho nhieu lan khi push vao queue
+	std::vector<Point> q;
+	q.reserve(totalCells);
+	q.push_back(start);
+	visited[start.y * width + start.x] = 1;
+	int front = 0;
 	int count = 0;
-	while (!q.empty()) {
-		Point current = q.front();
-		q.pop();
+	while (front < static_cast<int>(q.size())) {
+		Point current = q[front++];
 		count++;
 		Point next[4] = {
-			{current.x + 1,current.y},
-			{current.x - 1,current.y},
-			{current.x,current.y + 1},
-			{current.x,current.y - 1}
+			{current.x + 1, current.y},
+			{current.x - 1, current.y},
+			{current.x, current.y + 1},
+			{current.x, current.y - 1}
 		};
-		for (int i = 0;i < 4;i++) {
+		for (int i = 0; i < 4; i++) {
 			Point p = next[i];
-			if (!CheckValid(p, tail, width, height)) {
+			if (p.x < 0 || p.x >= width ||
+				p.y < 0 || p.y >= height) {
 				continue;
 			}
-			if (visited[p.y][p.x]) {
+			int index = p.y * width + p.x;
+			if (blocked[index] || visited[index]) {
 				continue;
 			}
-			visited[p.y][p.x] = true;
-			q.push(p);
+			visited[index] = 1;
+			q.push_back(p);
 		}
 	}
 	return count;
@@ -666,6 +685,7 @@ void SnakeAI::SimulateMove(
 	}
 }
 //diem so du doan cua trang thai tuong lai
+
 int SnakeAI::EvaluateFuture(
 	Point head,
 	Point fruit,
@@ -676,42 +696,49 @@ int SnakeAI::EvaluateFuture(
 	bool fruitAvailable,
 	int depth
 ) {
-	// da nhin du so buoc
+	// Da du do sau du doan
 	if (depth == 0) {
-		return EvaluatePosition(head, fruit, tail, width, height, fruitAvailable);
+		return EvaluatePosition(
+			head, fruit, tail, width, height, fruitAvailable
+		);
 	}
-	Direction directions[4] = { UP,DOWN,LEFT,RIGHT };
+	Direction directions[4] = { UP, DOWN, LEFT, RIGHT };
 	int bestScore = -1000000;
-	for (int i = 0;i < 4;i++) {
+	// Neu fruit da bi an, khong su dung toa do fruit cu
+	Point targetFruit = fruit;
+	if (!fruitAvailable) {
+		targetFruit = { -1, -1 };
+	}
+	for (int i = 0; i < 4; i++) {
 		Direction dir = directions[i];
-		//khong quay dau
+		// Khong cho phep quay nguoc dau
 		if (IsOppositeDirection(currentDirection, dir)) {
 			continue;
 		}
-		//neu fruit da bi an khong dung lai toa do cu
-		Point targetFruit = fruit;
-		if (!fruitAvailable) {
-			targetFruit = { -1,-1 };
-		}
-		//nuoc di hien tai co an toan khong
-		if (!CheckSafeMove(head, dir, targetFruit, tail, width, height)) {
-			continue;
-		}
-		//mo phong
+		// Mo phong nuoc di mot lan
 		Point newHead;
 		std::vector<Point> newTail;
 		bool ateFruit;
-		SimulateMove(head, dir, targetFruit, tail, newHead, newTail, ateFruit);
-		//ra ngoai ban do
-		if (newHead.x < 0 || newHead.x >= width || newHead.y < 0 || newHead.y >= height) {
-			continue;
-		}
-		// Kiem tra dau moi co nam trong ban do va co va cham voi than ran moi hay khong
+		SimulateMove(
+			head, dir, targetFruit, tail,
+			newHead, newTail, ateFruit
+		);
+		// Kiem tra tuong va than ran sau khi mo phong
 		if (!CheckValid(newHead, newTail, width, height)) {
 			continue;
 		}
-		//Neu an fruit thi cac buoc sau khong danh gia theo vi tri fruit cu nua
-		int futureScore = EvaluateFuture(newHead, fruit, newTail, dir, width, height, fruitAvailable && !ateFruit, depth - 1);
+		// Danh gia trang thai tiep theo
+		int futureScore = EvaluateFuture(
+			newHead,
+			fruit,
+			newTail,
+			dir,
+			width,
+			height,
+			fruitAvailable && !ateFruit,
+			depth - 1
+		);
+		// Thuong diem neu an duoc fruit
 		if (ateFruit) {
 			futureScore += 20;
 		}
@@ -719,12 +746,13 @@ int SnakeAI::EvaluateFuture(
 			bestScore = futureScore;
 		}
 	}
-	// Khong tim duoc nuoc di hop le
+	// Khong co nuoc di hop le
 	if (bestScore == -1000000) {
 		return -100000;
 	}
 	return bestScore;
 }
+
 //danh gia trang thai
 int SnakeAI::EvaluatePosition(
 	Point head,
