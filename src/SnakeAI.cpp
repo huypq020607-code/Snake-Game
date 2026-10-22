@@ -561,6 +561,7 @@ Direction SnakeAI::FindSafeDirection(
 	Direction bestDirection = STOP;
 	int bestScore = -1000000;
 	int bestReachable = -1;
+	int oldDistance = Distance(head, fruit);
 	for (int i = 0;i < 4;i++) {
 		Direction dir = directions[i];
 		//khong duoc quay nguoc dau
@@ -580,10 +581,18 @@ Direction SnakeAI::FindSafeDirection(
 		int futureScore = EvaluateFuture(newHead, fruit, newTail, dir, width, height, !ateFruit, 2);
 		// Dem so o co the tiep can
 		int reachable = CountReachableCells(newHead, newTail, width, height);
-		// uu tien diem cao hon neu bang thi uu tien o rong hon
-		if (futureScore > bestScore ||
-			(futureScore == bestScore && reachable > bestReachable)) {
-			bestScore = futureScore;
+		// Thuong neu tien gan trai cay
+		int fruitProgress = 0;
+		if (!ateFruit) {
+			int newDistance = Distance(newHead, fruit);
+			fruitProgress = oldDistance - newDistance;
+		}
+		// Tong diem: song sot + tien gan trai cay
+		int score = futureScore + fruitProgress * 3;
+		// uu tien diem cao hon neu bang thi chon vung rong hon
+		if (score > bestScore ||
+			(score == bestScore && reachable > bestReachable)) {
+			bestScore = score;
 			bestReachable = reachable;
 			bestDirection = dir;
 		}
@@ -685,7 +694,6 @@ void SnakeAI::SimulateMove(
 	}
 }
 //diem so du doan cua trang thai tuong lai
-
 int SnakeAI::EvaluateFuture(
 	Point head,
 	Point fruit,
