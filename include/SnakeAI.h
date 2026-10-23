@@ -22,6 +22,10 @@ private:
 		int g;  // So buoc da di
 		int h;  // Uoc luong khoang cach den fruit
 		std::vector<Direction> path; // Toan bo duong di
+		// Chi so nut cha trong danh sach cac nut A*
+		int parentIndex;
+		// Huong di tu nut cha den nut hien tai
+		Direction directionFromParent;
 	};
 	//BFS tim duong tu head toi fruit
 	Direction FindPathBFS(
@@ -66,11 +70,37 @@ private:
 		int width,
 		int height
 	);
+	// thu bam duoi neu A* khong tim duoc duong di toi fruit an toan
+	Direction FindTailFollowingDirection(
+		Point head,
+		Point fruit,
+		const std::vector<Point>& tail,
+		Direction currentDirection,
+		int width,
+		int height
+	);
 	//kiem tra sau khi an co bi nhot khong
 	bool IsSafeAfterMove(
 		Point head,
 		Direction dir,
 		Point fruit,
+		const std::vector<Point>& tail,
+		int width,
+		int height
+	);
+	//duong an toan A*
+	bool IsPathSafe(
+		Point head,
+		Point fruit,
+		const std::vector<Point>& tail,
+		Direction currentDirection,
+		const std::vector<Direction>& path,
+		int width,
+		int height
+	);
+	//tim duong den vi tri duoi hien tai
+	bool CanReachTail(
+		Point head,
 		const std::vector<Point>& tail,
 		int width,
 		int height
