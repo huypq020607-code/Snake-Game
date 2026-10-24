@@ -153,6 +153,10 @@ private:
 	void ClearCachedPath();
 	int astarCallCount = 0;
 	int cacheInvalidationCount = 0;
+	// bo dem chuan doan
+	int pathFoundCount = 0;
+	int stateLimitCount = 0;
+	int discoveryLimitCount = 0;
 	//lan tim duong gan nhat co that bai hay khong
 	bool lastSearchFailed = false;
 	//so luot con lai truoc khi thu lai A*
@@ -179,6 +183,16 @@ public:
 	//bo dem so lan chay A*
 	int GetAStarCallCount() const {
 		return astarCallCount;
+	}
+	//bo dem chan doan
+	int GetPathFoundCount() const {
+		return pathFoundCount;
+	}
+	int GetStateLimitCount() const {
+		return stateLimitCount;
+	}
+	int GetDiscoveryLimitCount() const {
+		return discoveryLimitCount;
 	}
 	//thong tin debug
 	int GetCacheInvalidationCount() const {

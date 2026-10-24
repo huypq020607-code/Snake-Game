@@ -382,8 +382,8 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 	// Luu cac nut A* tai day.
 	// ParentIndex tro den nut cha trong vector nay.
 	std::vector<AStarNode> nodes;
-	const int MAX_STATES = 500;
-	const int MAX_DISCOVERED = 1000;
+	const int MAX_STATES = 1200;
+	const int MAX_DISCOVERED = 2400;
 	// Moi lan mo rong co toi da 4 huong.
 	// Du tru bo nho, khong thay doi gioi han tim kiem.
 	nodes.reserve(
@@ -449,6 +449,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			}
 			// Dao nguoc de duong di theo thu tu xuat phat -> dich
 			std::reverse(path.begin(), path.end());
+			pathFoundCount++;
 			return path;
 		}
 		// 8. Thu cac huong di
@@ -527,6 +528,12 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 				nextG + nextH
 				});
 		}
+	}
+	if (statesChecked >= MAX_STATES) {
+		stateLimitCount++;
+	}
+	if (discoveryLimitHit) {
+		discoveryLimitCount++;
 	}
 	return {};
 }
@@ -1070,7 +1077,10 @@ Direction SnakeAI::GetNextDirection(
 	// Buoc 1: Neu moi doi vi tri, xoa cache cu
 	if (cachedFruit.x != fruit.x ||
 		cachedFruit.y != fruit.y) {
-		ClearCachedPath();
+		// Chi xoa duong di khong con an toan
+		// Khong reset trang thai tim duong that bai
+		cachedPath.clear();
+		pathIndex = 0;
 		cachedFruit = fruit;
 	}
 	// Buoc 2: Neu lan truoc tim duong that bai,
@@ -1091,7 +1101,7 @@ Direction SnakeAI::GetNextDirection(
 		cachedFruit = fruit;
 		// Buoc 4: Kiem tra toan bo duong di A*
 		if (!cachedPath.empty() &&
-			!IsPathSafe(head, fruit, tail,currentDirection,
+			!IsPathSafe(head, fruit, tail, currentDirection,
 				cachedPath, width, height)) {
 			cachedPath.clear();
 		}
