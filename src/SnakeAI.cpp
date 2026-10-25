@@ -603,7 +603,6 @@ bool SnakeAI::CanReachTail(
 	}
 	return false;
 }
-
 //kiem tra hai huong co nguoc nhau khong
 bool IsOppositeDirection(
 	Direction current,
@@ -685,6 +684,66 @@ int SnakeAI::CountReachableCells(
 	}
 	return count;
 }
+// dem huong di an toan
+int SnakeAI::CountSafeDirections(
+	Point head,
+	Point fruit,
+	const std::vector<Point>& tail,
+	Direction currentDirection,
+	int width,
+	int height
+) {
+	Direction directions[4] = { UP, DOWN, LEFT, RIGHT };
+	int count = 0;
+	for (int i = 0; i < 4; i++) {
+		Direction dir = directions[i];
+		if (IsOppositeDirection(currentDirection, dir)) {
+			continue;
+		}
+		Point newHead;
+		std::vector<Point> newTail;
+		bool ateFruit;
+		SimulateMove(head, dir, fruit, tail,
+			newHead, newTail, ateFruit);
+		if (CheckValid(newHead, newTail, width, height)) {
+			count++;
+		}
+	}
+	return count;
+}
+// dem huoan an toan du doan
+int SnakeAI::CountFutureOptions(
+	Point head,
+	Point fruit,
+	const std::vector<Point>& tail,
+	Direction currentDirection,
+	int width,
+	int height
+) {
+	Direction directions[4] = { UP, DOWN, LEFT, RIGHT };
+	int viableDirections = 0;
+	for (int i = 0; i < 4; i++) {
+		Direction dir = directions[i];
+		if (IsOppositeDirection(currentDirection, dir)) {
+			continue;
+		}
+		Point newHead;
+		std::vector<Point> newTail;
+		bool ateFruit;
+		SimulateMove(head, dir, fruit, tail,
+			newHead, newTail, ateFruit);
+		if (!CheckValid(newHead, newTail, width, height)) {
+			continue;
+		}
+		int options = CountSafeDirections(
+			newHead, fruit, newTail,
+			dir, width, height);
+		if (options > 0) {
+			viableDirections++;
+		}
+	}
+	return viableDirections;
+}
 // Chon huong di theo duoi ran
 Direction SnakeAI::FindTailFollowingDirection(
 	Point head,
@@ -716,12 +775,32 @@ Direction SnakeAI::FindTailFollowingDirection(
 		// Danh gia khong gian co the di toi
 		int reachable = CountReachableCells(
 			newHead, newTail, width, height);
+		// Kiem tra co the di den duoi ran hay khong
+		if (!CanReachTail(
+			newHead, newTail, width, height)) {
+			continue;
+		}
 		// Khong uu tien khu vuc qua chat
 		if (reachable <= 1) {
 			continue;
 		}
 		// Diem co ban: uu tien khu vuc rong
-		int score = reachable * 10;
+		int safeDirections = CountSafeDirections(
+			newHead,fruit,newTail,
+			dir,width,height);
+		int futureOptions = CountFutureOptions(
+			newHead, fruit, newTail,
+			dir, width, height);
+		int score = reachable * 10
+			+ safeDirections * 15
+			+ futureOptions * 10;
+		// Han che cac vi tri chi con mot huong di an toan
+		if (safeDirections <= 1) {
+			score -= 40;
+		}
+		if (futureOptions == 0) {
+			score -= 50;
+		}
 		// Thuong neu dau ran tien gan duoi ran
 		if (!newTail.empty()) {
 			Point tailEnd = newTail.back();
@@ -1036,7 +1115,6 @@ int SnakeAI::EvaluateFuture(
 	}
 	return bestScore;
 }
-
 //danh gia trang thai
 int SnakeAI::EvaluatePosition(
 	Point head,
@@ -1087,16 +1165,19 @@ Direction SnakeAI::GetNextDirection(
 	// cho AI di an toan them mot so luot
 	if (lastSearchFailed && failedSearchCooldown > 0) {
 		failedSearchCooldown--;
+		Direction tailDirection = FindTailFollowingDirection(
+			head, fruit, tail, currentDirection, width, height);
+		if (tailDirection != STOP) {
+			return tailDirection;
+		}
 		return FindSafeDirection(
-			head, fruit, tail, currentDirection, width, height
-		);
+			head, fruit, tail, currentDirection, width, height);
 	}
 	// Buoc 3: Neu khong con duong trong cache,
 	// hoac cache da duoc su dung het, tim duong moi
 	if (pathIndex >= cachedPath.size()) {
 		cachedPath = FindPathAStarPath(
-			head, fruit, tail, currentDirection, width, height
-		);
+			head, fruit, tail, currentDirection, width, height);
 		pathIndex = 0;
 		cachedFruit = fruit;
 		// Buoc 4: Kiem tra toan bo duong di A*
@@ -1133,8 +1214,11 @@ Direction SnakeAI::GetNextDirection(
 			}
 		}
 		// Duong di trong cache khong con an toan
-		ClearCachedPath();
+		cachedPath.clear();
+		pathIndex = 0;
 		cachedFruit = fruit;
+		lastSearchFailed = true;
+		failedSearchCooldown = 3;
 	}
 	// Buoc 6: Neu khong dung duoc cache,chon huong di an toan
 	// A* khong tim duoc duong an toan thu bam theo duoi ran truoc

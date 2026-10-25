@@ -144,6 +144,24 @@ private:
 		int width,
 		int height
 	);
+	// dem huong an toan
+	int CountSafeDirections(
+		Point head,
+		Point fruit,
+		const std::vector<Point>& tail,
+		Direction currentDirection,
+		int width,
+		int height
+	);
+	// dem huong an toan du doan
+	int CountFutureOptions(
+		Point head,
+		Point fruit,
+		const std::vector<Point>& tail,
+		Direction currentDirection,
+		int width,
+		int height
+	);
 	// Duong di A* da tim duoc
 	std::vector<Direction> cachedPath;
 	// Vi tri tiep theo trong duong di
