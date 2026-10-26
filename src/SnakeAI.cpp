@@ -901,8 +901,9 @@ bool SnakeAI::IsSafeAfterEating(
 	Point newHead;
 	std::vector<Point> newTail;
 	bool ateFruit;
+	// Mo phong nuoc di
 	SimulateMove(head, dir, fruit, tail, newHead, newTail, ateFruit);
-	//chi kiem tra nuoc di an trai cay
+	// chi kiem tra nuoc di an trai cay
 	if (!ateFruit) {
 		return true;
 	}
@@ -910,18 +911,9 @@ bool SnakeAI::IsSafeAfterEating(
 	if (!CheckValid(newHead, newTail, width, height)) {
 		return false;
 	}
-	//uoc luong khong gian co the di toi
-	int reachable = CountReachableCells(
-		newHead, newTail, width, height
-	);
-	// Can co du khong gian de di chuyen
-	if (reachable <= 2) {
-		return false;
-	}
-	// Uu tien trang thai co duong tiep can duoi
-	return CanReachTail(
-		newHead, newTail, width, height
-	);
+	// xac minh trang thai sau khi an
+	return IsSafeAfterEatingState(
+		newHead, newTail, width, height);
 }
 // mo phong duong an toan A*
 bool SnakeAI::IsPathSafe(
@@ -947,49 +939,34 @@ bool SnakeAI::IsPathSafe(
 	Direction simulatedDirection = currentDirection;
 	// Mac dinh fruit van con ton tai
 	bool fruitAvailable = true;
+	Point targetFruit = fruit;
 	for (Direction dir : path) {
 		// Khong cho phep dung hoac quay nguoc dau
 		if (dir == STOP ||
 			IsOppositeDirection(simulatedDirection, dir)) {
 			return false;
 		}
-		// Neu fruit da an, khong dung lai toa do cu
-		Point targetFruit = fruit;
-		if (!fruitAvailable) {
-			targetFruit = { -1, -1 };
-		}
 		Point newHead;
 		std::vector<Point> newTail;
 		bool ateFruit = false;
 		// Mo phong mot buoc
-		SimulateMove(
-			simulatedHead,
-			dir,
-			targetFruit,
-			simulatedTail,
-			newHead,
-			newTail,
-			ateFruit
-		);
+		SimulateMove(simulatedHead, dir, targetFruit,
+			simulatedTail, newHead, newTail, ateFruit);
 		// Kiem tra tuong va than ran sau buoc di
-		if (!CheckValid(
-			newHead, newTail, width, height
-		)) {
+		if (!CheckValid(newHead, newTail, width, height)) {
 			return false;
 		}
 		// Cap nhat trang thai sau buoc di
 		simulatedHead = newHead;
 		simulatedTail = std::move(newTail);
 		simulatedDirection = dir;
-		// Neu an fruit, kiem tra khong gian con lai
+		// Neu an fruit kiem tra trang thai sau khi an
 		if (ateFruit) {
 			fruitAvailable = false;
-			int reachable = CountReachableCells(
-				simulatedHead,
-				simulatedTail,
-				width,
-				height);
-			if (reachable <= 2) {
+			targetFruit = { -1, -1 };
+			if (!IsSafeAfterEatingState(
+				simulatedHead,simulatedTail,
+				width, height)) {
 				return false;
 			}
 		}
@@ -997,7 +974,31 @@ bool SnakeAI::IsPathSafe(
 	// Duong di hop le den cuoi
 	return true;
 }
-
+// Kiem tra trang thai ran sau khi an fruit
+bool SnakeAI::IsSafeAfterEatingState(
+	Point head,
+	const std::vector<Point>& tail,
+	int width,
+	int height
+) {
+	// 1. Kiem tra dau vao
+	if (width <= 0 || height <= 0) {
+		return false;
+	}
+	// 2. Kiem tra dau ran va than ran
+	if (!CheckValid(head, tail, width, height)) {
+		return false;
+	}
+	// 3. Uoc luong khong gian co the di toi
+	int reachable = CountReachableCells(
+		head, tail, width, height);
+	// 4. Can co du khong gian de di chuyen
+	if (reachable <= 2) {
+		return false;
+	}
+	// 5. Kiem tra kha nang tiep can duoi ran
+	return CanReachTail(head, tail, width, height);
+}
 //mo phong duong di
 void SnakeAI::SimulateMove(
 	Point head,

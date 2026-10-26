@@ -98,6 +98,13 @@ private:
 		int width,
 		int height
 	);
+	// kiem tra trang thai sau khi an fruit
+	bool IsSafeAfterEatingState(
+		Point head,
+		const std::vector<Point>& tail,
+		int width,
+		int height
+	);
 	//tim duong den vi tri duoi hien tai
 	bool CanReachTail(
 		Point head,
