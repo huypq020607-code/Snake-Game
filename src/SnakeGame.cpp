@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <cstdlib>
 #include <fstream>
+#include <string>
 using namespace std;
 //di chuyen con tro
 void gotoXY(int x, int y) {

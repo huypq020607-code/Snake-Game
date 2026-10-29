@@ -182,6 +182,9 @@ private:
 	int pathFoundCount = 0;
 	int stateLimitCount = 0;
 	int discoveryLimitCount = 0;
+	int bothLimitCount = 0;
+	int noPathCount = 0;
+	long long keyGenerationCount = 0;
 	//lan tim duong gan nhat co that bai hay khong
 	bool lastSearchFailed = false;
 	//so luot con lai truoc khi thu lai A*
@@ -205,6 +208,12 @@ public:
 		int width,
 		int height
 	);
+	double GetAStarSuccessRate() const {
+		if (astarCallCount == 0) {
+			return 0.0;
+		}
+		return 100.0 * pathFoundCount / astarCallCount;
+	}
 	//bo dem so lan chay A*
 	int GetAStarCallCount() const {
 		return astarCallCount;
@@ -218,6 +227,15 @@ public:
 	}
 	int GetDiscoveryLimitCount() const {
 		return discoveryLimitCount;
+	}
+	int GetBothLimitCount() const {
+		return bothLimitCount;
+	}
+	int GetNoPathCount() const {
+		return noPathCount;
+	}
+	long long GetKeyGenerationCount() const {
+		return keyGenerationCount;
 	}
 	//thong tin debug
 	int GetCacheInvalidationCount() const {

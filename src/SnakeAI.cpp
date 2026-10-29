@@ -89,7 +89,8 @@ Direction SnakeAI::FindPathBFS(
 	std::queue<SearchState> q;
 	std::unordered_set<std::string> visited;
 	// Tao khoa trang thai bang cac gia tri int dang nhi phan
-	auto makeKey = [](const SearchState& state) {
+	auto makeKey = [this](const SearchState& state) {
+		keyGenerationCount++;
 		std::string key;
 		// Moi int chiem sizeof(int) byte
 		key.reserve(
@@ -339,7 +340,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			+ abs(p.y - fruit.y);
 		};
 	// 3. Tao khoa duy nhat cho trang thai
-	auto makeKey = [](const SearchState& state) {
+	auto makeKey = [this](const SearchState& state) {
 		std::string key;
 		key.reserve(
 			sizeof(int) * (3 + state.tail.size() * 2)
@@ -365,13 +366,17 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 	struct OpenEntry {
 		int nodeIndex;
 		int f;
+		int h;
 	};
 	struct Compare {
 		bool operator()(
 			const OpenEntry& a,
 			const OpenEntry& b
 			) const {
-			return a.f > b.f;
+			if (a.f != b.f) {
+				return a.f > b.f;
+			}
+			return a.h > b.h;
 		}
 	};
 	std::priority_queue<
@@ -403,10 +408,8 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 	startNode.parentIndex = -1;
 	startNode.directionFromParent = STOP;
 	nodes.push_back(std::move(startNode));
-	open.push({
-		0,
-		heuristic(head)
-		});
+	int startH = heuristic(head);
+	open.push({ 0,startH,startH });
 	bestG[makeKey(start)] = 0;
 	Direction directions[4] = {
 		UP, DOWN, LEFT, RIGHT
@@ -443,8 +446,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			// Truy nguoc tu dich ve diem xuat phat
 			while (nodes[index].parentIndex != -1) {
 				path.push_back(
-					nodes[index].directionFromParent
-				);
+					nodes[index].directionFromParent);
 				index = nodes[index].parentIndex;
 			}
 			// Dao nguoc de duong di theo thu tu xuat phat -> dich
@@ -458,8 +460,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			if (current.currentDirection != STOP &&
 				IsOppositeDirection(
 					current.currentDirection,
-					dir
-				)) {
+					dir)) {
 				continue;
 			}
 			Point newHead;
@@ -523,17 +524,21 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			nextNode.directionFromParent = dir;
 			nodes.push_back(std::move(nextNode));
 			// Hang doi chi luu chi so nut va f
-			open.push({
-				nextIndex,
-				nextG + nextH
-				});
+			open.push({ nextIndex,nextG + nextH, nextH });
 		}
 	}
-	if (statesChecked >= MAX_STATES) {
+	bool stateLimitHit = (statesChecked >= MAX_STATES);
+	if (stateLimitHit) {
 		stateLimitCount++;
 	}
 	if (discoveryLimitHit) {
 		discoveryLimitCount++;
+	}
+	if (stateLimitHit && discoveryLimitHit) {
+		bothLimitCount++;
+	}
+	else if (!stateLimitHit && !discoveryLimitHit) {
+		noPathCount++;
 	}
 	return {};
 }
