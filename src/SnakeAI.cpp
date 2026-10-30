@@ -332,36 +332,30 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 		head.y < 0 || head.y >= height ||
 		fruit.x < 0 || fruit.x >= width ||
 		fruit.y < 0 || fruit.y >= height) {
+		auto endTime = std::chrono::steady_clock::now();
+		long long elapsed =
+			std::chrono::duration_cast<std::chrono::microseconds>(
+				endTime - startTime).count();
+		totalAStarTimeUs += elapsed;
+		if (elapsed > maxAStarTimeUs) {
+			maxAStarTimeUs = elapsed;
+		}
 		return {};
 	}
 	// 2. Heuristic Manhattan
 	auto heuristic = [&fruit](Point p) {
 		return abs(p.x - fruit.x)
 			+ abs(p.y - fruit.y);
-		};
+	};
 	// 3. Tao khoa duy nhat cho trang thai
 	auto makeKey = [this](const SearchState& state) {
-		std::string key;
-		key.reserve(
-			sizeof(int) * (3 + state.tail.size() * 2)
-		);
-		auto appendInt = [&key](int value) {
-			key.append(
-				reinterpret_cast<const char*>(&value),
-				sizeof(value)
-			);
-			};
-		appendInt(state.head.x);
-		appendInt(state.head.y);
-		appendInt(
-			static_cast<int>(state.currentDirection)
-		);
-		for (const Point& part : state.tail) {
-			appendInt(part.x);
-			appendInt(part.y);
-		}
+		keyGenerationCount++;
+		StateKey key;
+		key.head = state.head;
+		key.tail = state.tail;
+		key.currentDirection = state.currentDirection;
 		return key;
-		};
+	};
 	// 4. Nut trong hang doi chi can luu chi so va f
 	struct OpenEntry {
 		int nodeIndex;
@@ -382,8 +376,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 	std::priority_queue<
 		OpenEntry,
 		std::vector<OpenEntry>,
-		Compare
-	> open;
+		Compare > open;
 	// Luu cac nut A* tai day.
 	// ParentIndex tro den nut cha trong vector nay.
 	std::vector<AStarNode> nodes;
@@ -391,10 +384,8 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 	const int MAX_DISCOVERED = 2400;
 	// Moi lan mo rong co toi da 4 huong.
 	// Du tru bo nho, khong thay doi gioi han tim kiem.
-	nodes.reserve(
-		1 + MAX_STATES * 4
-	);
-	std::unordered_map<std::string, int> bestG;
+	nodes.reserve(1 + MAX_STATES * 4);
+	std::unordered_map<StateKey, int, StateHash> bestG;
 	// 5. Khoi tao trang thai ban dau
 	SearchState start;
 	start.head = head;
@@ -426,8 +417,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 		// Lay nut hien tai tu danh sach
 		const AStarNode& savedNode = nodes[nodeIndex];
 		// Bo qua nut khong con la duong tot nhat
-		std::string currentKey =
-			makeKey(savedNode.state);
+		StateKey currentKey = makeKey(savedNode.state);
 		auto it = bestG.find(currentKey);
 		if (it == bestG.end() ||
 			savedNode.g != it->second) {
@@ -452,6 +442,14 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			// Dao nguoc de duong di theo thu tu xuat phat -> dich
 			std::reverse(path.begin(), path.end());
 			pathFoundCount++;
+			auto endTime = std::chrono::steady_clock::now();
+			long long elapsed =
+				std::chrono::duration_cast<std::chrono::microseconds>(
+					endTime - startTime).count();
+			totalAStarTimeUs += elapsed;
+			if (elapsed > maxAStarTimeUs) {
+				maxAStarTimeUs = elapsed;
+			}
 			return path;
 		}
 		// 8. Thu cac huong di
@@ -491,9 +489,8 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			next.currentDirection = dir;
 			next.firstDirection =
 				(current.firstDirection == STOP)
-				? dir
-				: current.firstDirection;
-			std::string key = makeKey(next);
+				? dir : current.firstDirection;
+			StateKey key = makeKey(next);
 			int nextG = currentG + 1;
 			auto found = bestG.find(key);
 			// Da co duong den trang thai nay tot hon
@@ -513,9 +510,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			bestG[key] = nextG;
 			int nextH = heuristic(newHead);
 			// Luu nut moi va lien ket den nut cha
-			int nextIndex = static_cast<int>(
-				nodes.size()
-				);
+			int nextIndex = static_cast<int>(nodes.size());
 			AStarNode nextNode;
 			nextNode.state = std::move(next);
 			nextNode.g = nextG;

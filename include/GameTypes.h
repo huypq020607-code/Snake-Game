@@ -2,8 +2,8 @@
 #define GAMETYPES_H
 // ==================== DATA ====================
 struct Point {
-	int x;
-	int y;
+	int x = -1;
+	int y = -1;
 };
 // ==================== ENUM ====================
 enum Direction {

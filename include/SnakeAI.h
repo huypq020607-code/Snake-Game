@@ -7,25 +7,67 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <cstdlib>
+// luu thong tin dinh danh trang thai
+struct StateKey {
+	Point head = { -1, -1 };
+	std::vector<Point> tail;
+	Direction currentDirection = STOP;
+	bool operator==(const StateKey& other) const {
+		if (head.x != other.head.x ||
+			head.y != other.head.y ||
+			currentDirection != other.currentDirection ||
+			tail.size() != other.tail.size()) {
+			return false;
+		}
+		for (size_t i = 0; i < tail.size(); i++) {
+			if (tail[i].x != other.tail[i].x ||
+				tail[i].y != other.tail[i].y) {
+				return false;
+			}
+		}
+		return true;
+	}
+};
+// tao ma bam de tra cuu nhanh
+struct StateHash {
+	size_t operator()(const StateKey& state) const {
+		size_t seed = 0;
+		auto hashCombine = [&seed](int value) {
+			seed ^= std::hash<int>{}(value)
+				+0x9e3779b9
+				+ (seed << 6)
+				+ (seed >> 2);
+			};
+		hashCombine(state.head.x);
+		hashCombine(state.head.y);
+		hashCombine(static_cast<int>(
+			state.currentDirection));
+		for (const Point& part : state.tail) {
+			hashCombine(part.x);
+			hashCombine(part.y);
+		}
+		return seed;
+	}
+};
 class SnakeAI {
 private:
 	struct SearchState {
-		Point head;
+		Point head = { -1, -1 };
 		std::vector<Point> tail;
 		// Huong di dau tien tu vi tri ban dau
-		Direction firstDirection;
+		Direction firstDirection = STOP;
 		// Huong di cua buoc gan nhat
-		Direction currentDirection;
+		Direction currentDirection = STOP;
 	};
 	struct AStarNode {
 		SearchState state;
-		int g;  // So buoc da di
-		int h;  // Uoc luong khoang cach den fruit
+		int g = 0;  // So buoc da di
+		int h = 0;  // Uoc luong khoang cach den fruit
 		std::vector<Direction> path; // Toan bo duong di
 		// Chi so nut cha trong danh sach cac nut A*
-		int parentIndex;
+		int parentIndex = -1;
 		// Huong di tu nut cha den nut hien tai
-		Direction directionFromParent;
+		Direction directionFromParent = STOP;
 	};
 	//BFS tim duong tu head toi fruit
 	Direction FindPathBFS(
@@ -185,6 +227,8 @@ private:
 	int bothLimitCount = 0;
 	int noPathCount = 0;
 	long long keyGenerationCount = 0;
+	long long totalAStarTimeUs = 0;
+	long long maxAStarTimeUs = 0;
 	//lan tim duong gan nhat co that bai hay khong
 	bool lastSearchFailed = false;
 	//so luot con lai truoc khi thu lai A*
@@ -236,6 +280,12 @@ public:
 	}
 	long long GetKeyGenerationCount() const {
 		return keyGenerationCount;
+	}
+	long long GetTotalAStarTimeUs() const {
+		return totalAStarTimeUs;
+	}
+	long long GetMaxAStarTimeUs() const {
+		return maxAStarTimeUs;
 	}
 	//thong tin debug
 	int GetCacheInvalidationCount() const {
