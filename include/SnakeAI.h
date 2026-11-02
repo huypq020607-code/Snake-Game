@@ -63,7 +63,6 @@ private:
 		SearchState state;
 		int g = 0;  // So buoc da di
 		int h = 0;  // Uoc luong khoang cach den fruit
-		std::vector<Direction> path; // Toan bo duong di
 		// Chi so nut cha trong danh sach cac nut A*
 		int parentIndex = -1;
 		// Huong di tu nut cha den nut hien tai
@@ -229,6 +228,11 @@ private:
 	long long keyGenerationCount = 0;
 	long long totalAStarTimeUs = 0;
 	long long maxAStarTimeUs = 0;
+	long long totalKeyGenerationTimeNs = 0;
+	long long maxKeyGenerationTimeNs = 0;
+	long long totalSimulateMoveTimeNs = 0;
+	long long totalCheckValidTimeNs = 0;
+	long long totalBestGTimeNs = 0;
 	//lan tim duong gan nhat co that bai hay khong
 	bool lastSearchFailed = false;
 	//so luot con lai truoc khi thu lai A*
@@ -286,6 +290,21 @@ public:
 	}
 	long long GetMaxAStarTimeUs() const {
 		return maxAStarTimeUs;
+	}
+	long long GetTotalSimulateMoveTimeNs() const {
+		return totalSimulateMoveTimeNs;
+	}
+	long long GetTotalCheckValidTimeNs() const {
+		return totalCheckValidTimeNs;
+	}
+	long long GetTotalBestGTimeNs() const {
+		return totalBestGTimeNs;
+	}
+	long long GetTotalKeyGenerationTimeNs() const {
+		return totalKeyGenerationTimeNs;
+	}
+	long long GetMaxKeyGenerationTimeNs() const {
+		return maxKeyGenerationTimeNs;
 	}
 	//thong tin debug
 	int GetCacheInvalidationCount() const {

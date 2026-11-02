@@ -26,8 +26,8 @@ bool CheckTail(
 	Point p,
 	const std::vector<Point>& tail
 ) {
-	for (int i = 0; i < tail.size(); i++) {
-		if (p.x == tail[i].x && p.y == tail[i].y) {
+	for (const Point& part : tail) {
+		if (p.x == part.x && p.y == part.y) {
 			return true;
 		}
 	}
@@ -326,37 +326,60 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 ) {
 	astarCallCount++;
 	auto startTime = std::chrono::steady_clock::now();
-	// 1. Kiem tra dau vao
+	// 1. Ghi nhan thoi gian A*
+	auto recordAStarTime = [this, &startTime]() {
+		auto endTime = std::chrono::steady_clock::now();
+		long long elapsed =
+			std::chrono::duration_cast<std::chrono::microseconds>(
+				endTime - startTime
+			).count();
+		totalAStarTimeUs += elapsed;
+		maxAStarTimeUs = (std::max)(maxAStarTimeUs, elapsed);
+	};
+	// 2. Ghi nhan thoi gian thao tac bestG
+	auto recordBestGTime = [this](
+		const std::chrono::steady_clock::time_point& start
+		) {
+			auto end = std::chrono::steady_clock::now();
+			totalBestGTimeNs +=
+				std::chrono::duration_cast<std::chrono::nanoseconds>(
+					end - start
+				).count();
+		};
+	// 3. Kiem tra dau vao
 	if (width <= 0 || height <= 0 ||
 		head.x < 0 || head.x >= width ||
 		head.y < 0 || head.y >= height ||
 		fruit.x < 0 || fruit.x >= width ||
 		fruit.y < 0 || fruit.y >= height) {
-		auto endTime = std::chrono::steady_clock::now();
-		long long elapsed =
-			std::chrono::duration_cast<std::chrono::microseconds>(
-				endTime - startTime).count();
-		totalAStarTimeUs += elapsed;
-		if (elapsed > maxAStarTimeUs) {
-			maxAStarTimeUs = elapsed;
-		}
+		recordAStarTime();
 		return {};
 	}
-	// 2. Heuristic Manhattan
-	auto heuristic = [&fruit](Point p) {
-		return abs(p.x - fruit.x)
-			+ abs(p.y - fruit.y);
-	};
-	// 3. Tao khoa duy nhat cho trang thai
+	// 4. Heuristic Manhattan
+	auto heuristic = [&fruit](Point point) {
+		return std::abs(point.x - fruit.x)
+			+ std::abs(point.y - fruit.y);
+		};
+	// 5. Tao khoa duy nhat cho trang thai
 	auto makeKey = [this](const SearchState& state) {
+		auto start = std::chrono::steady_clock::now();
 		keyGenerationCount++;
 		StateKey key;
 		key.head = state.head;
 		key.tail = state.tail;
 		key.currentDirection = state.currentDirection;
+		auto end = std::chrono::steady_clock::now();
+		long long elapsed =
+			std::chrono::duration_cast<std::chrono::nanoseconds>(
+				end - start
+			).count();
+		totalKeyGenerationTimeNs += elapsed;
+		maxKeyGenerationTimeNs =
+			(std::max)(maxKeyGenerationTimeNs, elapsed);
+
 		return key;
-	};
-	// 4. Nut trong hang doi chi can luu chi so va f
+		};
+	// 6. Cau truc phan tu trong hang doi uu tien
 	struct OpenEntry {
 		int nodeIndex;
 		int f;
@@ -373,20 +396,21 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			return a.h > b.h;
 		}
 	};
+	// 7. Khoi tao cac cau truc du lieu
 	std::priority_queue<
 		OpenEntry,
 		std::vector<OpenEntry>,
-		Compare > open;
-	// Luu cac nut A* tai day.
-	// ParentIndex tro den nut cha trong vector nay.
+		Compare
+	> open;
 	std::vector<AStarNode> nodes;
 	const int MAX_STATES = 1200;
 	const int MAX_DISCOVERED = 2400;
-	// Moi lan mo rong co toi da 4 huong.
-	// Du tru bo nho, khong thay doi gioi han tim kiem.
 	nodes.reserve(1 + MAX_STATES * 4);
 	std::unordered_map<StateKey, int, StateHash> bestG;
-	// 5. Khoi tao trang thai ban dau
+	// Toi uu bang bam
+	bestG.max_load_factor(0.7f);
+	bestG.reserve(MAX_DISCOVERED);
+	// 8. Khoi tao trang thai ban dau
 	SearchState start;
 	start.head = head;
 	start.tail = tail;
@@ -400,59 +424,50 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 	startNode.directionFromParent = STOP;
 	nodes.push_back(std::move(startNode));
 	int startH = heuristic(head);
-	open.push({ 0,startH,startH });
-	bestG[makeKey(start)] = 0;
+	open.push({ 0, startH, startH });
+	bestG.emplace(makeKey(start), 0);
 	Direction directions[4] = {
 		UP, DOWN, LEFT, RIGHT
 	};
 	int statesChecked = 0;
 	int statesDiscovered = 1;
 	bool discoveryLimitHit = false;
-	// 6. Bat dau tim kiem
-	while (!open.empty() &&
-		statesChecked < MAX_STATES) {
+	// 9. Bat dau tim kiem A*
+	while (!open.empty() && statesChecked < MAX_STATES) {
 		OpenEntry entry = open.top();
 		open.pop();
 		int nodeIndex = entry.nodeIndex;
-		// Lay nut hien tai tu danh sach
+		// Bo qua trang thai khong con la duong di tot nhat
 		const AStarNode& savedNode = nodes[nodeIndex];
-		// Bo qua nut khong con la duong tot nhat
 		StateKey currentKey = makeKey(savedNode.state);
-		auto it = bestG.find(currentKey);
-		if (it == bestG.end() ||
-			savedNode.g != it->second) {
+		auto found = bestG.find(currentKey);
+		if (found == bestG.end() ||
+			savedNode.g != found->second) {
 			continue;
 		}
 		statesChecked++;
-		// Sao chep trang thai hien tai,
-		// tranh bi anh huong khi them nut vao vector.
-		SearchState current = savedNode.state;
+		// Sao chep trang thai hien tai
+		const SearchState& current = savedNode.state;
 		int currentG = savedNode.g;
-		// 7. Neu da den qua, khoi phuc duong di
+		// 10. Kiem tra da den dich
 		if (current.head.x == fruit.x &&
 			current.head.y == fruit.y) {
 			std::vector<Direction> path;
 			int index = nodeIndex;
-			// Truy nguoc tu dich ve diem xuat phat
+			// Truy nguoc duong di thong qua parentIndex
 			while (nodes[index].parentIndex != -1) {
 				path.push_back(
-					nodes[index].directionFromParent);
+					nodes[index].directionFromParent
+				);
 				index = nodes[index].parentIndex;
 			}
-			// Dao nguoc de duong di theo thu tu xuat phat -> dich
+			// Dao nguoc duong di
 			std::reverse(path.begin(), path.end());
 			pathFoundCount++;
-			auto endTime = std::chrono::steady_clock::now();
-			long long elapsed =
-				std::chrono::duration_cast<std::chrono::microseconds>(
-					endTime - startTime).count();
-			totalAStarTimeUs += elapsed;
-			if (elapsed > maxAStarTimeUs) {
-				maxAStarTimeUs = elapsed;
-			}
+			recordAStarTime();
 			return path;
 		}
-		// 8. Thu cac huong di
+		// 11. Mo rong cac huong di
 		for (Direction dir : directions) {
 			// Khong cho ran quay nguoc truc tiep
 			if (current.currentDirection != STOP &&
@@ -462,54 +477,77 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 				continue;
 			}
 			Point newHead;
-			std::vector<Point> newTail;
 			bool ateFruit;
-			// Giu nguyen logic mo phong
+			// Tao trang thai tiep theo
+			SearchState next;
+			// Mo phong di chuyen
+			auto simulateStart = std::chrono::steady_clock::now();
 			SimulateMove(
 				current.head,
 				dir,
 				fruit,
 				current.tail,
 				newHead,
-				newTail,
+				next.tail,
 				ateFruit
 			);
-			// Giu nguyen kiem tra an toan
-			if (!CheckValid(
+			auto simulateEnd = std::chrono::steady_clock::now();
+			totalSimulateMoveTimeNs +=
+				std::chrono::duration_cast<std::chrono::nanoseconds>(
+					simulateEnd - simulateStart
+				).count();
+			// Kiem tra tinh hop le
+			auto validStart = std::chrono::steady_clock::now();
+			bool valid = CheckValid(
 				newHead,
-				newTail,
+				next.tail,
 				width,
 				height
-			)) {
+			);
+			auto validEnd = std::chrono::steady_clock::now();
+			totalCheckValidTimeNs +=
+				std::chrono::duration_cast<std::chrono::nanoseconds>(
+					validEnd - validStart
+				).count();
+			if (!valid) {
 				continue;
 			}
-			SearchState next;
 			next.head = newHead;
-			next.tail = std::move(newTail);
 			next.currentDirection = dir;
 			next.firstDirection =
 				(current.firstDirection == STOP)
-				? dir : current.firstDirection;
-			StateKey key = makeKey(next);
+				? dir
+				: current.firstDirection;
+			// Tinh chi phi duong di
 			int nextG = currentG + 1;
-			auto found = bestG.find(key);
-			// Da co duong den trang thai nay tot hon
-			if (found != bestG.end() &&
-				nextG >= found->second) {
-				continue;
+			// Tao khoa trang thai
+			StateKey key = makeKey(next);
+			// Kiem tra trang thai da duoc phat hien chua
+			auto bestGStart = std::chrono::steady_clock::now();
+			auto nextFound = bestG.find(key);
+			if (nextFound != bestG.end()) {
+				// Da co duong di tot hon hoac bang
+				if (nextG >= nextFound->second) {
+					recordBestGTime(bestGStart);
+					continue;
+				}
+				// Cap nhat chi phi tot hon
+				nextFound->second = nextG;
 			}
-			// Giu nguyen gioi han so trang thai moi
-			if (found == bestG.end() &&
-				statesDiscovered >= MAX_DISCOVERED) {
-				discoveryLimitHit = true;
-				continue;
-			}
-			if (found == bestG.end()) {
+			else {
+				// Kiem tra gioi han trang thai moi
+				if (statesDiscovered >= MAX_DISCOVERED) {
+					discoveryLimitHit = true;
+					recordBestGTime(bestGStart);
+					continue;
+				}
 				statesDiscovered++;
+				bestG.emplace(std::move(key), nextG);
 			}
-			bestG[key] = nextG;
+			recordBestGTime(bestGStart);
+			// Tinh heuristic
 			int nextH = heuristic(newHead);
-			// Luu nut moi va lien ket den nut cha
+			// Tao node moi va lien ket node cha
 			int nextIndex = static_cast<int>(nodes.size());
 			AStarNode nextNode;
 			nextNode.state = std::move(next);
@@ -518,10 +556,15 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			nextNode.parentIndex = nodeIndex;
 			nextNode.directionFromParent = dir;
 			nodes.push_back(std::move(nextNode));
-			// Hang doi chi luu chi so nut va f
-			open.push({ nextIndex,nextG + nextH, nextH });
+			// Dua node vao hang doi uu tien
+			open.push({
+				nextIndex,
+				nextG + nextH,
+				nextH
+				});
 		}
 	}
+	// 12. Cap nhat thong ke gioi han tim kiem
 	bool stateLimitHit = (statesChecked >= MAX_STATES);
 	if (stateLimitHit) {
 		stateLimitCount++;
@@ -535,6 +578,8 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 	else if (!stateLimitHit && !discoveryLimitHit) {
 		noPathCount++;
 	}
+	// 13. Ghi nhan truong hop khong tim thay duong di
+	recordAStarTime();
 	return {};
 }
 // tim duong den vi tri duoi hien tai
@@ -1012,41 +1057,27 @@ void SnakeAI::SimulateMove(
 	// 1. Tinh vi tri dau moi
 	newHead = head;
 	switch (dir) {
-	case UP:
-		newHead.y--;
-		break;
-	case DOWN:
-		newHead.y++;
-		break;
-	case LEFT:
-		newHead.x--;
-		break;
-	case RIGHT:
-		newHead.x++;
-		break;
-	default:
-		break;
+	case UP:    newHead.y--; break;
+	case DOWN:  newHead.y++; break;
+	case LEFT:  newHead.x--; break;
+	case RIGHT: newHead.x++; break;
+	default: break;
 	}
-	// 2. Kiem tra co an fruit khong
+	// 2. Kiem tra an fruit
 	ateFruit = (newHead.x == fruit.x &&
 		newHead.y == fruit.y);
 	// 3. Tao than moi
 	newTail.clear();
-	newTail.reserve(tail.size() + 1);
-	// Dau cu tro thanh phan than dau tien
 	newTail.push_back(head);
 	if (ateFruit) {
-		// An fruit: giu lai toan bo than cu
-		for (const auto& part : tail) {
-			newTail.push_back(part);
-		}
+		// An fruit: giu toan bo than cu
+		newTail.insert(newTail.end(),
+			tail.begin(),tail.end());
 	}
-	else {
-		// Khong an fruit:
-		// Bo phan duoi cuoi vi duoi se di chuyen
-		for (int i = 0; i < (int)tail.size() - 1; i++) {
-			newTail.push_back(tail[i]);
-		}
+	else if (!tail.empty()) {
+		// Khong an fruit: bo phan duoi cuoi
+		newTail.insert(newTail.end(),
+			tail.begin(),tail.end() - 1);
 	}
 }
 //diem so du doan cua trang thai tuong lai
