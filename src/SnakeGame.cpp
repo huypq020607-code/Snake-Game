@@ -4,7 +4,6 @@
 #include <windows.h>
 #include <cstdlib>
 #include <fstream>
-#include <string>
 using namespace std;
 //di chuyen con tro
 void gotoXY(int x, int y) {
@@ -292,6 +291,21 @@ void SnakeGame::DrawInstructionsMenu() {
 	gotoXY(0, 22);
 	cout << "================================";
 }
+void SnakeGame::DrawHUD() {
+    gotoXY(0, height + 3);
+    cout << "Score: " << score
+        << "    High Score: " << highScore
+        << "        ";
+    gotoXY(0, height + 4);
+    if (state == PLAYING) {
+        cout << "WASD: Move | P: Pause | X: Exit        ";
+    }
+    else if (state == PAUSED) {
+        cout << "          [ GAME PAUSED ]              ";
+        gotoXY(0, height + 5);
+        cout << "          P: Resume | X: Exit           ";
+    }
+}
 void SnakeGame::DrawFullBoard() {
 	ClearScreen();
 	// ===== BOARD =====
@@ -345,21 +359,7 @@ void SnakeGame::DrawFullBoard() {
 	}
 	cout << endl;
 	// ===== HUD =====
-	gotoXY(0, height + 3);
-	cout << "Score: " << score
-		<< "    High Score: " << highScore
-		<< "        ";
-
-	gotoXY(0, height + 4);
-
-	if (state == PLAYING) {
-		cout << "WASD: Move | P: Pause | X: Exit        ";
-	}
-	else if (state == PAUSED) {
-		cout << "          [ GAME PAUSED ]              ";
-		gotoXY(0, height + 5);
-		cout << "          P: Resume | X: Exit           ";
-	}
+	DrawHUD();
 	needFullDraw = false;
 }
 void SnakeGame::DrawUpdatedBoard() {
@@ -385,11 +385,7 @@ void SnakeGame::DrawUpdatedBoard() {
 		cout << "*";
 	}
 	// ===== HUD =====
-	gotoXY(0, height + 3);
-	cout << "Score: " << score
-		<< "    High Score: " << highScore
-		<< "        ";
-	gotoXY(0, height + 4);
+	DrawHUD();
 	if (state == PLAYING) {
 		cout << "WASD: Move | P: Pause | X: Exit        ";
 	}

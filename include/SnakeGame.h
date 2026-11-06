@@ -87,6 +87,7 @@ private:
 	void DrawGameOverMenu();
 	void DrawFullBoard();
 	void DrawUpdatedBoard();
+	void DrawHUD();
 	// ==================== HIGH SCORE ====================
 	void LoadHighScore();
 	void SaveHighScore();

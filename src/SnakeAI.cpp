@@ -2,25 +2,13 @@
 #include <vector>
 #include <queue>
 #include <cstdlib>
-#include <string>
-#include <unordered_set>
 #include <chrono>
-#include <fstream>
-#include <iostream>
 #include <algorithm>
 #include <cmath>
 #include <utility>
+#include <unordered_map>
 //dinh nghia ham 
 bool IsOppositeDirection(Direction current, Direction next);
-//xoa duong di da luu
-void SnakeAI::ClearCachedPath() {
-	cachedPath.clear();
-	pathIndex = 0;
-	cachedFruit = { -1, -1 };
-	lastSearchFailed = false;
-	failedSearchCooldown = 0;
-	cacheInvalidationCount++;
-}
 // kiem tra point co nam tren tail khong
 bool CheckTail(
 	Point p,
@@ -47,273 +35,6 @@ bool CheckValid(
 	}
 	// Kiem tra than ran
 	return !CheckTail(p, tail);
-}
-//kiem tra huong di chuyen co an toan khong
-bool SnakeAI::CheckSafeMove(
-	Point head,
-	Direction dir,
-	Point fruit,
-	const std::vector<Point>& tail,
-	int width,
-	int height
-) {
-	Point newHead;
-	std::vector<Point> newTail;
-	bool ateFruit;
-	// Mo phong nuoc di
-	SimulateMove(head, dir, fruit, tail, newHead, newTail, ateFruit);
-	// Kiem tra dau moi va than ran moi
-	return CheckValid(newHead, newTail, width, height);
-}
-// BFS tim duong tu head->fruit
-Direction SnakeAI::FindPathBFS(
-	Point head,
-	Point fruit,
-	const std::vector<Point>& tail,
-	Direction currentDirection,
-	int width,
-	int height
-) {
-	// Kiem tra toa do dau vao
-	if (width <= 0 || height <= 0) {
-		return STOP;
-	}
-	if (head.x < 0 || head.x >= width ||
-		head.y < 0 || head.y >= height) {
-		return STOP;
-	}
-	if (fruit.x < 0 || fruit.x >= width ||
-		fruit.y < 0 || fruit.y >= height) {
-		return STOP;
-	}
-	std::queue<SearchState> q;
-	std::unordered_set<std::string> visited;
-	// Tao khoa trang thai bang cac gia tri int dang nhi phan
-	auto makeKey = [this](const SearchState& state) {
-		keyGenerationCount++;
-		std::string key;
-		// Moi int chiem sizeof(int) byte
-		key.reserve(
-			sizeof(int) * (3 + state.tail.size() * 2)
-		);
-		auto appendInt = [&key](int value) {
-			key.append(
-				reinterpret_cast<const char*>(&value),
-				sizeof(value)
-			);
-			};
-		appendInt(state.head.x);
-		appendInt(state.head.y);
-		appendInt(static_cast<int>(state.currentDirection));
-		for (const Point& part : state.tail) {
-			appendInt(part.x);
-			appendInt(part.y);
-		}
-		return key;
-		};
-	// Trang thai ban dau
-	SearchState start;
-	start.head = head;
-	start.tail = tail;
-	start.firstDirection = STOP;
-	start.currentDirection = currentDirection;
-	q.push(std::move(start));
-	visited.insert(makeKey(q.front()));
-	Direction directions[4] = {
-		UP, DOWN, LEFT, RIGHT
-	};
-	const int MAX_STATES = 5000;
-	int statesChecked = 0;
-	while (!q.empty() && statesChecked < MAX_STATES) {
-		// Di chuyen trang thai ra khoi queue, tranh sao chep vector
-		SearchState current = std::move(q.front());
-		q.pop();
-		statesChecked++;
-		// Da den fruit
-		if (current.head.x == fruit.x &&
-			current.head.y == fruit.y) {
-			return current.firstDirection;
-		}
-		for (int i = 0; i < 4; i++) {
-			Direction dir = directions[i];
-			// Khong duoc quay dau
-			if (current.currentDirection != STOP &&
-				IsOppositeDirection(
-					current.currentDirection, dir
-				)) {
-				continue;
-			}
-			Point newHead;
-			std::vector<Point> newTail;
-			bool ateFruit;
-			// Mo phong than ran sau mot nuoc di
-			SimulateMove(
-				current.head,
-				dir,
-				fruit,
-				current.tail,
-				newHead,
-				newTail,
-				ateFruit
-			);
-			// Kiem tra tuong va than ran
-			if (!CheckValid(
-				newHead, newTail, width, height
-			)) {
-				continue;
-			}
-			SearchState nextState;
-			nextState.head = newHead;
-			nextState.tail = std::move(newTail);
-			// Luu huong di dau tien
-			if (current.firstDirection == STOP) {
-				nextState.firstDirection = dir;
-			}
-			else {
-				nextState.firstDirection =
-					current.firstDirection;
-			}
-			nextState.currentDirection = dir;
-			// Them trang thai neu chua duoc tham
-			std::string key = makeKey(nextState);
-			if (!visited.insert(std::move(key)).second) {
-				continue;
-			}
-			q.push(std::move(nextState));
-		}
-	}
-	return STOP;
-}
-Direction SnakeAI::FindPathAStar(
-	Point head,
-	Point fruit,
-	const std::vector<Point>& tail,
-	Direction currentDirection,
-	int width,
-	int height
-) {
-	if (width <= 0 || height <= 0 ||
-		head.x < 0 || head.x >= width ||
-		head.y < 0 || head.y >= height ||
-		fruit.x < 0 || fruit.x >= width ||
-		fruit.y < 0 || fruit.y >= height) {
-		return STOP;
-	}
-	// Uoc luong khoang cach Manhattan
-	auto heuristic = [&fruit](Point p) {
-		return std::abs(p.x - fruit.x)
-			+ std::abs(p.y - fruit.y);
-		};
-	// Tao khoa trang thai nhi phan
-	auto makeKey = [](const SearchState& state) {
-		std::string key;
-		key.reserve(
-			sizeof(int) * (3 + state.tail.size() * 2)
-		);
-		auto appendInt = [&key](int value) {
-			key.append(
-				reinterpret_cast<const char*>(&value),
-				sizeof(value)
-			);
-			};
-		appendInt(state.head.x);
-		appendInt(state.head.y);
-		appendInt(static_cast<int>(state.currentDirection));
-		for (const Point& part : state.tail) {
-			appendInt(part.x);
-			appendInt(part.y);
-		}
-		return key;
-		};
-	// Priority queue: uu tien node co f = g + h nho nhat
-	struct Compare {
-		bool operator()(
-			const AStarNode& a,
-			const AStarNode& b
-			) const {
-			return a.g + a.h > b.g + b.h;
-		}
-	};
-	std::priority_queue<
-		AStarNode,
-		std::vector<AStarNode>,
-		Compare
-	> open;
-	std::unordered_set<std::string> visited;
-	SearchState start;
-	start.head = head;
-	start.tail = tail;
-	start.firstDirection = STOP;
-	start.currentDirection = currentDirection;
-	open.push({ start, 0, heuristic(head) });
-	visited.insert(makeKey(start));
-	Direction directions[4] = {
-		UP, DOWN, LEFT, RIGHT
-	};
-	const int MAX_STATES = 500;
-	const int MAX_DISCOVERED = 1000;
-	int statesChecked = 0;
-	int statesDiscovered = 1;
-	while (!open.empty() && statesChecked < MAX_STATES) {
-		AStarNode node = open.top();
-		open.pop();
-		SearchState current = std::move(node.state);
-		statesChecked++;
-		if (current.head.x == fruit.x &&
-			current.head.y == fruit.y) {
-			return current.firstDirection;
-		}
-		for (Direction dir : directions) {
-			if (current.currentDirection != STOP &&
-				IsOppositeDirection(
-					current.currentDirection, dir
-				)) {
-				continue;
-			}
-			Point newHead;
-			std::vector<Point> newTail;
-			bool ateFruit;
-			SimulateMove(
-				current.head,
-				dir,
-				fruit,
-				current.tail,
-				newHead,
-				newTail,
-				ateFruit
-			);
-			if (!CheckValid(newHead, newTail, width, height)) {
-				continue;
-			}
-			SearchState next;
-			next.head = newHead;
-			next.tail = std::move(newTail);
-			next.currentDirection = dir;
-			next.firstDirection =
-				(current.firstDirection == STOP)
-				? dir
-				: current.firstDirection;
-			std::string key = makeKey(next);
-			if (visited.find(key) != visited.end()) {
-				continue;
-			}
-			// Gioi han tong so trang thai da kham pha
-			if (statesDiscovered >= MAX_DISCOVERED) {
-				continue;
-			}
-			visited.insert(std::move(key));
-			int nextG = node.g + 1;
-			int nextH = heuristic(newHead);
-
-			open.push({
-				std::move(next),
-			 nextG,
-				nextH
-				});
-			statesDiscovered++;
-		}
-	}
-	return STOP;
 }
 //A* tra ve toan bo duong di
 std::vector<Direction> SnakeAI::FindPathAStarPath(
@@ -414,12 +135,10 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 	SearchState start;
 	start.head = head;
 	start.tail = tail;
-	start.firstDirection = STOP;
 	start.currentDirection = currentDirection;
 	AStarNode startNode;
 	startNode.state = start;
 	startNode.g = 0;
-	startNode.h = heuristic(head);
 	startNode.parentIndex = -1;
 	startNode.directionFromParent = STOP;
 	nodes.push_back(std::move(startNode));
@@ -514,10 +233,6 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			}
 			next.head = newHead;
 			next.currentDirection = dir;
-			next.firstDirection =
-				(current.firstDirection == STOP)
-				? dir
-				: current.firstDirection;
 			// Tinh chi phi duong di
 			int nextG = currentG + 1;
 			// Tao khoa trang thai
@@ -552,7 +267,6 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			AStarNode nextNode;
 			nextNode.state = std::move(next);
 			nextNode.g = nextG;
-			nextNode.h = nextH;
 			nextNode.parentIndex = nodeIndex;
 			nextNode.directionFromParent = dir;
 			nodes.push_back(std::move(nextNode));
@@ -565,7 +279,8 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 		}
 	}
 	// 12. Cap nhat thong ke gioi han tim kiem
-	bool stateLimitHit = (statesChecked >= MAX_STATES);
+	bool stateLimitHit =
+    		(statesChecked >= MAX_STATES && !open.empty());
 	if (stateLimitHit) {
 		stateLimitCount++;
 	}
@@ -575,9 +290,8 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 	if (stateLimitHit && discoveryLimitHit) {
 		bothLimitCount++;
 	}
-	else if (!stateLimitHit && !discoveryLimitHit) {
-		noPathCount++;
-	}
+	// Dem moi lan A* khong tim duoc duong di
+	noPathCount++;
 	// 13. Ghi nhan truong hop khong tim thay duong di
 	recordAStarTime();
 	return {};
@@ -886,7 +600,7 @@ Direction SnakeAI::FindSafeDirection(
 			continue;
 		}
 		//huong nay co an toan khong
-		if (!CheckSafeMove(head, dir, fruit, tail, width, height)) {
+		if (!IsSafeAfterMove(head, dir, fruit, tail, width, height)) {
 			continue;
 		}
 		//mo phong nuoc di
@@ -982,8 +696,6 @@ bool SnakeAI::IsPathSafe(
 	Point simulatedHead = head;
 	std::vector<Point> simulatedTail = tail;
 	Direction simulatedDirection = currentDirection;
-	// Mac dinh fruit van con ton tai
-	bool fruitAvailable = true;
 	Point targetFruit = fruit;
 	for (Direction dir : path) {
 		// Khong cho phep dung hoac quay nguoc dau
@@ -1007,7 +719,6 @@ bool SnakeAI::IsPathSafe(
 		simulatedDirection = dir;
 		// Neu an fruit kiem tra trang thai sau khi an
 		if (ateFruit) {
-			fruitAvailable = false;
 			targetFruit = { -1, -1 };
 			if (!IsSafeAfterEatingState(
 				simulatedHead,simulatedTail,
@@ -1192,6 +903,7 @@ Direction SnakeAI::GetNextDirection(
 		cachedPath.clear();
 		pathIndex = 0;
 		cachedFruit = fruit;
+		cacheInvalidationCount++;
 	}
 	// Buoc 2: Neu lan truoc tim duong that bai,
 	// cho AI di an toan them mot so luot
@@ -1217,6 +929,7 @@ Direction SnakeAI::GetNextDirection(
 			!IsPathSafe(head, fruit, tail, currentDirection,
 				cachedPath, width, height)) {
 			cachedPath.clear();
+			cacheInvalidationCount++;
 		}
 		// Neu khong co duong di hop le
 		if (cachedPath.empty()) {
@@ -1249,6 +962,7 @@ Direction SnakeAI::GetNextDirection(
 		cachedPath.clear();
 		pathIndex = 0;
 		cachedFruit = fruit;
+		cacheInvalidationCount++;
 		lastSearchFailed = true;
 		failedSearchCooldown = 3;
 	}
