@@ -78,6 +78,7 @@ private:
 	void InstructionsInput();
 	void GameOverScreenInput();
 	void GameOverInput();
+	void AIInput();
 	// ==================== DRAWING ====================
 	void DrawMenu();
 	void DrawGameModeMenu();
@@ -97,7 +98,6 @@ public:
 	// ==================== GAME LOOP ====================
 	void Draw();
 	void Input();
-	void AIInput();
 	void ControlSnake();
 	void Logic();
 	// ==================== MENU ====================
@@ -112,7 +112,6 @@ public:
 	bool IsPaused() const;
 	bool IsExited() const;
 	bool IsInMenu() const;
-	bool IsInDifficultyMenu() const;
 	// ==================== OTHER ====================
 	int GetGameSpeed() const;
 };

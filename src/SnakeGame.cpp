@@ -386,12 +386,6 @@ void SnakeGame::DrawUpdatedBoard() {
 	}
 	// ===== HUD =====
 	DrawHUD();
-	if (state == PLAYING) {
-		cout << "WASD: Move | P: Pause | X: Exit        ";
-	}
-	else if (state == PAUSED) {
-		cout << "GAME PAUSED | P: Resume | X: Exit     ";
-	}
 }
 void SnakeGame::Draw() {
 	if (state == MENU) {
@@ -544,7 +538,7 @@ void SnakeGame::DifficultyInput() {
 			gameSpeed = 24;
 		}
 		state = MENU;
-		selectedOption = START_GAME;
+		selectedOption = DIFFICULTY;
 		ClearScreen();
 		DrawMenu();
 	}
@@ -629,8 +623,10 @@ void SnakeGame::AIInput() {
 	dir = newDirection;
 }
 void SnakeGame::Input() {
-	if (_kbhit()) { //kiem tra neu co phim bam vao
-		switch (_getch()) {
+	if (!_kbhit()) {
+		return;
+	}
+	switch (_getch()) {
 		case 'p':
 		case 'P':
 			if (state == PLAYING) {
@@ -647,14 +643,14 @@ void SnakeGame::Input() {
 			break;
 		case 'a':
 		case 'A':
-			if (state == PLAYING && dir != RIGHT)
-				dir = LEFT;
+		if (state == PLAYING && dir != RIGHT)
+			dir = LEFT;
 			break;
 		case 'd':
 		case 'D':
 			if (state == PLAYING && dir != LEFT) {
 				dir = RIGHT;
-			}
+				}
 			break;
 		case 'w':
 		case 'W':
@@ -673,7 +669,6 @@ void SnakeGame::Input() {
 			state = EXITED;
 			break;
 		}
-	}
 }
 void SnakeGame::SpawnFruit() {
 	do {
@@ -753,24 +748,28 @@ void SnakeGame::Move() {
 }
 // va cham
 void SnakeGame::CheckCollision() {
-	//va tuong
-	if (head.x < 0 || head.x >= width || head.y < 0 || head.y >= height) {
-		state = GAME_OVER_SCREEN;
-		needFullDraw = true;
-		ClearScreen();
-		DrawGameOverScreen();
-		return;
-	}
-	//va than
-	for (const auto& t : tail) {
-		if (head.x == t.x && head.y == t.y) {
-			state = GAME_OVER_SCREEN;
-			needFullDraw = true;
-			ClearScreen();
-			DrawGameOverScreen();
-			return;
-		}
-	}
+    bool collided = false;
+    // Va tuong
+    if (head.x < 0 || head.x >= width ||
+        head.y < 0 || head.y >= height) {
+        collided = true;
+    }
+    // Va than
+    else {
+        for (const auto& t : tail) {
+            if (head.x == t.x && head.y == t.y) {
+                collided = true;
+                break;
+            }
+        }
+    }
+    // Xu ly khi co va cham
+    if (collided) {
+        state = GAME_OVER_SCREEN;
+        needFullDraw = true;
+        ClearScreen();
+        DrawGameOverScreen();
+    }
 }
 void SnakeGame::ResetGame() {
 	tail.clear();
@@ -787,20 +786,15 @@ void SnakeGame::ResetGame() {
 	needFullDraw = true;
 }
 void SnakeGame::Logic() {
-	if (state == PLAYING) {
-		Move();
-		CheckCollision();
-	}
-	//neu va cham thi dung
-	if (state != PLAYING) {
-		return;
-	}
+    if (state == PLAYING) {
+        Move();
+        CheckCollision();
+    }
 }
 void SnakeGame::LoadHighScore() {
 	ifstream file("data/highscore.txt");
 	if (file.is_open()) {
 		file >> highScore;
-		file.close();
 	}
 	else {
 		highScore = 0;
@@ -810,7 +804,6 @@ void SnakeGame::SaveHighScore() {
 	ofstream file("data/highscore.txt");
 	if (file.is_open()) {
 		file << highScore;
-		file.close();
 	}
 }
 void SnakeGame::ControlSnake() {
@@ -855,9 +848,6 @@ bool SnakeGame::IsPaused() const {
 }
 void SnakeGame::RunGameOverMenu() {
 	GameOverInput();
-}
-bool SnakeGame::IsInDifficultyMenu() const {
-	return state == DIFFICULTY_MENU;
 }
 int SnakeGame::GetGameSpeed() const {
 	return gameSpeed;
