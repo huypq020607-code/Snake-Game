@@ -4,6 +4,11 @@
 #include "GameTypes.h"
 #include <cstddef>
 #include <cstdint>
+enum SearchResult {
+    REACHABLE,
+    UNREACHABLE,
+    UNKNOWN
+};
 class SnakeAI {
 private:
 	// luu thong tin dinh danh trang thai
@@ -11,10 +16,15 @@ private:
 		Point head = { -1, -1 };
 		std::vector<Point> tail;
 		Direction currentDirection = STOP;
+		Point fruit = {-1, -1};
+		bool ateInitialFruit = false;
 		bool operator==(const StateKey& other) const {
 			if (head.x != other.head.x ||
 				head.y != other.head.y ||
+				fruit.x != other.fruit.x ||
+				fruit.y != other.fruit.y ||
 				currentDirection != other.currentDirection ||
+				ateInitialFruit != other.ateInitialFruit ||
 				tail.size() != other.tail.size()) {
 				return false;
 			}
@@ -43,8 +53,9 @@ private:
 					| static_cast<std::uint32_t>(p.y);
 				};
 			seed = mix(seed ^ packPoint(state.head));
-			seed = mix(
-				seed ^ static_cast<std::uint64_t>(state.currentDirection));
+			seed = mix(seed ^ packPoint(state.fruit));
+			seed = mix(seed ^ static_cast<std::uint64_t>(state.currentDirection));
+			seed = mix(seed ^ static_cast<uint64_t>(state.ateInitialFruit));
 			for (const Point& part : state.tail) {
 				seed = mix(seed ^ packPoint(part));
 			}
@@ -56,6 +67,8 @@ private:
 		std::vector<Point> tail;
 		// Huong di cua buoc gan nhat
 		Direction currentDirection = STOP;
+		Point fruit = {-1, -1};
+		bool ateInitialFruit = false;
 	};
 	struct AStarNode {
 		SearchState state;
@@ -122,6 +135,39 @@ private:
 		const std::vector<Point>& tail,
 		int width,
 		int height
+	);
+	//kiem tra kha nang song khi di theo duoi
+	bool CanSurviveByFollowingTail(
+   		const Point& head,
+    		const std::vector<Point>& tail,
+    		Direction currentDirection,
+    		const Point& fruit,
+    		int width,
+    		int height
+	);
+	//tao fruit moi
+	bool GenerateNewFruit(
+    		const Point& head,
+    		const std::vector<Point>& tail,
+    		int width,
+    		int height,
+    		Point& newFruit
+	);
+	//sau khi an fruit A kiem tra xem co the an fruit B duoc khong
+	SearchResult CanReachFruit(
+	    const SearchState& start,
+	    const Point& targetFruit,
+	    int width,
+	    int height,
+	    size_t maxStates
+	);
+	// cac o trong de sinh fruit
+	std::vector<Point> GenerateFruitCandidates(
+	    const Point& head,
+	    const std::vector<Point>& tail,
+	    int width,
+	    int height,
+	    int maxCandidates
 	);
 	//mo phong buoc di
 	void SimulateMove(

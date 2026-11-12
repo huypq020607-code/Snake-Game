@@ -7,6 +7,7 @@
 #include <cmath>
 #include <utility>
 #include <unordered_map>
+#include <unordered_set>
 //dinh nghia ham 
 bool IsOppositeDirection(Direction current, Direction next);
 // kiem tra point co nam tren tail khong
@@ -89,6 +90,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 		key.head = state.head;
 		key.tail = state.tail;
 		key.currentDirection = state.currentDirection;
+		key.fruit = state.fruit;
 		auto end = std::chrono::steady_clock::now();
 		long long elapsed =
 			std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -136,6 +138,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 	start.head = head;
 	start.tail = tail;
 	start.currentDirection = currentDirection;
+	start.fruit = fruit;
 	AStarNode startNode;
 	startNode.state = start;
 	startNode.g = 0;
@@ -204,7 +207,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			SimulateMove(
 				current.head,
 				dir,
-				fruit,
+				current.fruit,
 				current.tail,
 				newHead,
 				next.tail,
@@ -233,6 +236,7 @@ std::vector<Direction> SnakeAI::FindPathAStarPath(
 			}
 			next.head = newHead;
 			next.currentDirection = dir;
+			next.fruit = current.fruit;
 			// Tinh chi phi duong di
 			int nextG = currentG + 1;
 			// Tao khoa trang thai
@@ -361,6 +365,285 @@ bool SnakeAI::CanReachTail(
 		}
 	}
 	return false;
+}
+//kiem tra kha nang song khi di theo duoi
+bool SnakeAI::CanSurviveByFollowingTail(
+    const Point& head,
+    const std::vector<Point>& tail,
+    Direction currentDirection,
+    const Point& fruit,
+    int width,
+    int height
+) {
+    // 1. Khoi tao trang thai ban dau
+    SearchState start;
+    start.head = head;
+    start.tail = tail;
+    start.currentDirection = currentDirection;
+    start.fruit = fruit;
+    start.ateInitialFruit = false;
+    std::queue<SearchState> q;
+    std::unordered_set<StateKey, StateHash> visited;
+    q.push(start);
+    StateKey startKey;
+    startKey.head = start.head;
+    startKey.tail = start.tail;
+    startKey.currentDirection = start.currentDirection;
+    startKey.fruit = start.fruit;
+    startKey.ateInitialFruit = start.ateInitialFruit;
+    visited.insert(startKey);
+    // 2. Cac huong di chuyen
+    Direction directions[] = {
+        UP, DOWN, LEFT, RIGHT
+    };
+    // 3. Gioi han tim kiem
+    const size_t MAX_STATES = 1200;
+    size_t exploredStates = 0;
+    // 4. BFS
+    while (!q.empty()) {
+        SearchState current = q.front();
+        q.pop();
+        exploredStates++;
+        if (exploredStates > MAX_STATES) {
+            return false;
+        }
+        // 5. Thu cac huong di chuyen
+        for (Direction dir : directions) {
+            // Khong cho quay nguoc 180 do
+            if (
+                (current.currentDirection == UP && dir == DOWN) ||
+                (current.currentDirection == DOWN && dir == UP) ||
+                (current.currentDirection == LEFT && dir == RIGHT) ||
+                (current.currentDirection == RIGHT && dir == LEFT)
+            ) {
+                continue;
+            }
+            // 6. Mo phong buoc di tiep theo
+            Point newHead;
+            std::vector<Point> newTail;
+            bool ateFruit = false;
+	    // Mo phong di chuyen den vi tri tiep theo
+            SimulateMove(
+                current.head,
+                dir,
+                current.fruit,
+                current.tail,
+                newHead,
+                newTail,
+                ateFruit
+            );
+            // 7. Kiem tra va cham sau khi mo phong
+            if (!CheckValid(newHead, newTail, width, height)) {
+                continue;
+            }
+            // 8. Tao trang thai moi
+            SearchState nextState;
+            nextState.head = newHead;
+            nextState.tail = newTail;
+            nextState.currentDirection = dir;
+	    nextState.ateInitialFruit = current.ateInitialFruit;
+	    // Xu ly khi an fruit
+	    if (ateFruit) {
+    		// Neu da an fruit A truoc do thi an fruit B
+    		if (current.ateInitialFruit) {
+        		return true;
+   		}
+    		 // Danh dau da an A
+    		nextState.ateInitialFruit = true;
+    		// Lay danh sach cac vi tri co the sinh B
+    		const int MAX_CANDIDATES = 24;
+    		std::vector<Point> candidates = GenerateFruitCandidates(
+        		nextState.head,
+        		nextState.tail,
+        		width,
+        		height,
+        		MAX_CANDIDATES
+    		);
+    		// Khong con o trong de sinh B
+    		if (candidates.empty()) {
+        		return true;
+    		}
+    		// Kiem tra tung vi tri B
+    		const size_t MAX_BFS_STATES = 1200;
+		bool allReachable = true;
+    		for (const Point& candidate : candidates) {
+        		SearchResult result = CanReachFruit(
+    				nextState,
+    				candidate,
+   				width,
+    				height,
+    				MAX_BFS_STATES
+			);
+			if (result != SearchResult::REACHABLE) {
+    				allReachable = false;
+    				break;
+			}
+    		}
+	    	// Tat ca vi tri B duoc lay mau deu co duong di
+	    	if (allReachable) {
+        		return true;
+    		}
+		// Khong dung duoc duong nay den A.
+    		// Tiep tuc BFS de thu duong khac den A.
+    		continue;
+	    }
+	    else {
+	    	nextState.fruit = current.fruit;
+	    }
+            // 9. Tao khoa trang thai
+            StateKey nextKey;
+            nextKey.head = nextState.head;
+            nextKey.tail = nextState.tail;
+            nextKey.currentDirection = nextState.currentDirection;
+	    nextKey.fruit = nextState.fruit;
+	    nextKey.ateInitialFruit = nextState.ateInitialFruit;
+            // Bo qua trang thai da tham
+            if (visited.find(nextKey) != visited.end()) {
+                continue;
+            }
+            visited.insert(nextKey);
+            // 10. Dua trang thai moi vao hang doi
+            q.push(nextState);
+        }
+    }
+    // Khong tim thay duong an ca fruit A va fruit B
+    return false;
+}
+//tao fruit moi
+bool SnakeAI::GenerateNewFruit(
+    const Point& head,
+    const std::vector<Point>& tail,
+    int width,
+    int height,
+    Point& newFruit
+) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Point p = {x, y};
+            // Không đặt thức ăn tại đầu rắn
+            if (p.x == head.x && p.y == head.y)
+                continue;
+            // Không đặt thức ăn trên thân rắn
+            if (CheckTail(p, tail))
+                continue;
+            newFruit = p;
+            return true;
+        }
+    }
+    return false;
+}
+// cac o trong de sinh fruit
+std::vector<Point> SnakeAI::GenerateFruitCandidates(
+    const Point& head,
+    const std::vector<Point>& tail,
+    int width,
+    int height,
+    int maxCandidates
+) {
+    std::vector<Point> candidates;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Point p = {x, y};
+            // Bo qua vi tri dau ran
+            if (p.x == head.x && p.y == head.y) {
+                continue;
+            }
+            // Bo qua cac vi tri than ran
+            if (CheckTail(p, tail)) {
+                continue;
+            }
+            candidates.push_back(p);
+        }
+    }
+    // Neu so vi tri khong vuot qua gioi han
+    if ((int)candidates.size() <= maxCandidates) {
+        return candidates;
+    }
+    // Lay mau cac vi tri cach deu trong danh sach
+    std::vector<Point> sampled;
+    for (int i = 0; i < maxCandidates; i++) {
+        int index = i * (int)candidates.size() / maxCandidates;
+        sampled.push_back(candidates[index]);
+    }
+    return sampled;
+}
+//sau khi an fruit A kiem tra xem co the an fruit B duoc khong
+SearchResult SnakeAI::CanReachFruit(
+    const SearchState& start,
+    const Point& targetFruit,
+    int width,
+    int height,
+    size_t maxStates
+) {
+    std::queue<SearchState> q;
+    std::unordered_set<StateKey, StateHash> visited;
+    SearchState initial = start;
+    initial.fruit = targetFruit;
+    q.push(initial);
+    StateKey startKey;
+    startKey.head = initial.head;
+    startKey.tail = initial.tail;
+    startKey.currentDirection = initial.currentDirection;
+    startKey.fruit = initial.fruit;
+    startKey.ateInitialFruit = initial.ateInitialFruit;
+    visited.insert(startKey);
+    Direction directions[] = {UP, DOWN, LEFT, RIGHT};
+    size_t exploredStates = 0;
+    while (!q.empty()) {
+        SearchState current = q.front();
+        q.pop();
+        exploredStates++;
+        if (exploredStates > maxStates) {
+            return SearchResult::UNKNOWN;
+        }
+        for (Direction dir : directions) {
+            if (
+                (current.currentDirection == UP && dir == DOWN) ||
+                (current.currentDirection == DOWN && dir == UP) ||
+                (current.currentDirection == LEFT && dir == RIGHT) ||
+                (current.currentDirection == RIGHT && dir == LEFT)
+            ) {
+                continue;
+            }
+            Point newHead;
+            std::vector<Point> newTail;
+            bool ateFruit = false;
+            SimulateMove(
+                current.head,
+                dir,
+                targetFruit,
+                current.tail,
+                newHead,
+                newTail,
+                ateFruit
+            );
+            if (!CheckValid(newHead, newTail, width, height)) {
+                continue;
+            }
+            // Da an duoc B
+            if (ateFruit) {
+                return SearchResult::REACHABLE;
+            }
+            SearchState nextState;
+            nextState.head = newHead;
+            nextState.tail = newTail;
+            nextState.currentDirection = dir;
+            nextState.fruit = targetFruit;
+            nextState.ateInitialFruit = true;
+            StateKey nextKey;
+            nextKey.head = nextState.head;
+            nextKey.tail = nextState.tail;
+            nextKey.currentDirection = nextState.currentDirection;
+            nextKey.fruit = nextState.fruit;
+            nextKey.ateInitialFruit = nextState.ateInitialFruit;
+            if (visited.find(nextKey) != visited.end()) {
+                continue;
+            }
+            visited.insert(nextKey);
+            q.push(nextState);
+        }
+    }
+    return SearchResult::UNREACHABLE;
 }
 //kiem tra hai huong co nguoc nhau khong
 bool IsOppositeDirection(
