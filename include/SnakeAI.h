@@ -4,7 +4,7 @@
 #include "GameTypes.h"
 #include <cstddef>
 #include <cstdint>
-enum SearchResult {
+enum class SearchResult {
     REACHABLE,
     UNREACHABLE,
     UNKNOWN
@@ -137,7 +137,7 @@ private:
 		int height
 	);
 	//kiem tra kha nang song khi di theo duoi
-	bool CanSurviveByFollowingTail(
+	SearchResult CanSurviveByFollowingTail(
    		const Point& head,
     		const std::vector<Point>& tail,
     		Direction currentDirection,

@@ -367,7 +367,7 @@ bool SnakeAI::CanReachTail(
 	return false;
 }
 //kiem tra kha nang song khi di theo duoi
-bool SnakeAI::CanSurviveByFollowingTail(
+SearchResult SnakeAI::CanSurviveByFollowingTail(
     const Point& head,
     const std::vector<Point>& tail,
     Direction currentDirection,
@@ -397,15 +397,16 @@ bool SnakeAI::CanSurviveByFollowingTail(
         UP, DOWN, LEFT, RIGHT
     };
     // 3. Gioi han tim kiem
-    const size_t MAX_STATES = 1200;
+    const size_t MAX_STATES = 400;
     size_t exploredStates = 0;
+    bool hasUnknownRoute = false;
     // 4. BFS
     while (!q.empty()) {
         SearchState current = q.front();
         q.pop();
         exploredStates++;
         if (exploredStates > MAX_STATES) {
-            return false;
+            return SearchResult::UNKNOWN;
         }
         // 5. Thu cac huong di chuyen
         for (Direction dir : directions) {
@@ -446,12 +447,12 @@ bool SnakeAI::CanSurviveByFollowingTail(
 	    if (ateFruit) {
     		// Neu da an fruit A truoc do thi an fruit B
     		if (current.ateInitialFruit) {
-        		return true;
+        		return SearchResult::REACHABLE;
    		}
     		 // Danh dau da an A
     		nextState.ateInitialFruit = true;
     		// Lay danh sach cac vi tri co the sinh B
-    		const int MAX_CANDIDATES = 24;
+    		const int MAX_CANDIDATES = 2;
     		std::vector<Point> candidates = GenerateFruitCandidates(
         		nextState.head,
         		nextState.tail,
@@ -461,11 +462,12 @@ bool SnakeAI::CanSurviveByFollowingTail(
     		);
     		// Khong con o trong de sinh B
     		if (candidates.empty()) {
-        		return true;
+        		return SearchResult::REACHABLE;
     		}
     		// Kiem tra tung vi tri B
-    		const size_t MAX_BFS_STATES = 1200;
+    		const size_t MAX_BFS_STATES = 100;
 		bool allReachable = true;
+		bool hasUnknown = false;
     		for (const Point& candidate : candidates) {
         		SearchResult result = CanReachFruit(
     				nextState,
@@ -474,15 +476,21 @@ bool SnakeAI::CanSurviveByFollowingTail(
     				height,
     				MAX_BFS_STATES
 			);
-			if (result != SearchResult::REACHABLE) {
+			if (result == SearchResult::UNREACHABLE) {
     				allReachable = false;
     				break;
 			}
+			if (result == SearchResult::UNKNOWN) {
+ 				hasUnknown = true;
+			}
     		}
 	    	// Tat ca vi tri B duoc lay mau deu co duong di
-	    	if (allReachable) {
-        		return true;
-    		}
+	    	if (allReachable && !hasUnknown) {
+    			return SearchResult::REACHABLE;
+		}
+		if (allReachable && hasUnknown) {
+ 			hasUnknownRoute = true;
+		}
 		// Khong dung duoc duong nay den A.
     		// Tiep tuc BFS de thu duong khac den A.
     		continue;
@@ -507,7 +515,10 @@ bool SnakeAI::CanSurviveByFollowingTail(
         }
     }
     // Khong tim thay duong an ca fruit A va fruit B
-    return false;
+    if (hasUnknownRoute) {
+        return SearchResult::UNKNOWN;
+    }
+    return SearchResult::UNREACHABLE;
 }
 //tao fruit moi
 bool SnakeAI::GenerateNewFruit(
@@ -1213,6 +1224,16 @@ Direction SnakeAI::GetNextDirection(
 				cachedPath, width, height)) {
 			cachedPath.clear();
 			cacheInvalidationCount++;
+		}
+		// Kiem tra kha nang song sau khi an fruit
+		if (!cachedPath.empty()) {
+    			SearchResult survivalResult = CanSurviveByFollowingTail(
+        			head, tail, currentDirection,
+        			fruit, width, height);
+    		if (survivalResult == SearchResult::UNREACHABLE) {
+        		cachedPath.clear();
+        		cacheInvalidationCount++;
+    			}
 		}
 		// Neu khong co duong di hop le
 		if (cachedPath.empty()) {
